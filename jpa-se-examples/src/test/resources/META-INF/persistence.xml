@@ -1,0 +1,63 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+    <persistence-unit name="testJpaMySQL" transaction-type="RESOURCE_LOCAL">
+        <!--
+            1. Validation provider should be in classpath.
+            2. If validatino provider is container managed = AUTO, if not = CALLBACK
+        -->
+        <validation-mode>CALLBACK</validation-mode>
+        <!-- Hibernate automatically detects entity classes. No need for <class> tags. -->
+        <!--class>net.slisenko.model.Employee</class>
+        <class>net.slisenko.model.Department</class>
+        <class>net.slisenko.model.Task</class>
+        <class>net.slisenko.model.AccessCard</class>
+        <class>net.slisenko.model.Project</class-->
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testjpa"/>
+            <property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="root"/>
+
+            <!-- 2-nd level cache properties -->
+            <!-- TODO: enable only for cacle2 tests -->
+            <!--property name="hibernate.cache.use_second_level_cache" value="true"/>
+            <property name="hibernate.cache.use_query_cache" value="true"/>
+            <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
+
+            ENABLE_SELECTIVE - Cached only entities with @Cacheable(true)
+            DISABLE_SELECTIVE - Cached all entities except @Cacheable(false)
+            <property name="javax.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/-->
+
+            <!-- Hibernate properties -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.validator.apply_to_ddl" value="true"/>
+
+            <!--property name="org.hibernate.flushMode" value="MANUAL"/-->
+            <!--property name="hibernate.connection.isolation" value="1"/--> <!-- ISOLATION_READ_UNCOMMITED -->
+            <!--property name="hibernate.connection.isolation" value="2"/--> <!-- ISOLATION_READ_COMMITED -->
+            <!--property name="hibernate.connection.isolation" value="4"/--> <!-- ISOLATION_REPEATABLE_READ -->
+            <!--property name="hibernate.connection.isolation" value="8"/--> <!-- ISOLATION_SERIALIZABLE -->
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="testJpaPostgres" transaction-type="RESOURCE_LOCAL">
+        <validation-mode>CALLBACK</validation-mode>
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/testjpa"/>
+            <property name="javax.persistence.jdbc.user" value="postgres"/>
+            <property name="javax.persistence.jdbc.password" value="root"/>
+
+            <!-- Hibernate properties -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.validator.apply_to_ddl" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>

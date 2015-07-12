@@ -1,0 +1,10 @@
+1. Play with Persistence unit, Persistence context, EntityManager, Transaction: 
+1.1 open several EntityManagers, check if they return different objects => they have different contexts
+1.2 Open EntityManager, open transaction, make some inserts,updates, do not commit tx, then use this EM in another thread and check we do not see transaction changes
+1.3 Make subproject which will be deployed to JavaEE container and create Statefull, Stateless beans, create EntityMangers using @PersistenceContext, add maven plug-in for deploy to server
+1.4 Make a rollback - see if entities are detached, what happens with primary keys?
+1.5 Try to use @Version
+1.6 Can we create managed entity in one context and then use this emtity in anither?
+1.7 Detach entity and then try to access lazy-loaded relationships (relationships have cascade detach)
+1.8 Try merge with cascade and without it. Load objects in one transaction, detach, change values, try to merge back.
+!!!1.9 Create utility which prints which obtects belongs to specific context checkContext(EntityManager, Object...)
