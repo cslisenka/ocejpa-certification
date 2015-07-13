@@ -14,6 +14,7 @@ import java.util.List;
  * 2. They do not increment version number when we use optimistic locking
  * 3. Cascading operations do not work with bulk queries
  * 4. Bulk queries do not care about relationships and we can get FOREIGN KEY CONSTRAINT FAIL
+ * 5. FOREIGN KEY fails also when entity has persistent collection
  */
 public class TestBulkQueriesExample extends AbstractJpaTest {
 

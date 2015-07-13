@@ -142,8 +142,15 @@ public class TestJPQL extends BaseJPQLTest {
 
     @Test
     public void testSubqueries() {
-        // TODO
-        // TODO use EXISTS
+        // Get all houses where floors number is greater than average
+        List<House> housesWithFloorsLessThanAverage = em.createQuery("SELECT h FROM House h WHERE h.floors <= (SELECT AVG(ho.floors) FROM House ho)").getResultList();
+        System.out.println(housesWithFloorsLessThanAverage);
+
+        // USING EXISTS
+        // TODO clarify how exists works
+        List<House> housesOnSpecificStreet = em.createQuery("SELECT h FROM House h WHERE EXISTS (SELECT 1 FROM Street s WHERE h.street = s AND s.name = :name)")
+                .setParameter("name", "my street").getResultList();
+        System.out.println(housesOnSpecificStreet);
     }
 
     @Test
@@ -185,6 +192,12 @@ public class TestJPQL extends BaseJPQLTest {
                 .setParameter("name", "Minsk").getResultList();
         System.out.println("<cities by name>");
         System.out.println(citiesByName);
+    }
+
+    @Test
+    public void testOrderBy() {
+        List<Customer> orderedCustomers = em.createQuery("SELECT c FROM Customer c ORDER BY c.budget DESC").getResultList();
+        System.out.println(orderedCustomers);
     }
 
     /**

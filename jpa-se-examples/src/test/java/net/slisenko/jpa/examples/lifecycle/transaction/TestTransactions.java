@@ -19,7 +19,13 @@ public class TestTransactions extends AbstractJpaTest {
         em2 = emf.createEntityManager();
     }
 
-    // TODO try clead() inside transaction, see that not all entities can be rolled-back if we do this
+    // TODO try clean() inside transaction, see that not all entities can be rolled-back if we do this
+    /**
+     * the use of transaction-scoped entity managers outside of a transaction. Any query
+     executed in this situation returns detached entity instances instead of managed entity instances. To make changes
+     on these detached entities, they must first be merged into a persistence context before they can be synchronized with
+     the database.
+     */
 
     /**
      * If we use merge() method parameter object will not get ID specified and will be detached.

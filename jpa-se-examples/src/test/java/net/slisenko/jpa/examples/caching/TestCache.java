@@ -1,7 +1,6 @@
 package net.slisenko.jpa.examples.caching;
 
 import net.slisenko.AbstractJpaTest;
-import net.slisenko.jpa.examples.relationship.embedded.Employee;
 import org.junit.Test;
 
 import javax.persistence.Cache;

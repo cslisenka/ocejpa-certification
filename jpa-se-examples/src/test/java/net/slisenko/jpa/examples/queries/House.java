@@ -18,6 +18,8 @@ public class House extends Identity {
 
     private int floors;
 
+    private int price;
+
     public House() {
     }
 
@@ -49,10 +51,19 @@ public class House extends Identity {
         this.owner = owner;
     }
 
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
     @Override
     public String toString() {
         return "House{" +
-             //   "street=" + street +
+                "price=" + price +
+                "name=" + name +
                 ", owner=" + owner +
                 ", floors=" + floors +
                 '}';
