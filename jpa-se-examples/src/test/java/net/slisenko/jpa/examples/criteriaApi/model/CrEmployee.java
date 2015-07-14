@@ -13,6 +13,7 @@ import java.util.List;
 public class CrEmployee extends Identity {
 
     private int salary;
+    private int age;
 
     @ManyToOne(cascade = CascadeType.ALL)
     private CrAddress address;
@@ -52,9 +53,18 @@ public class CrEmployee extends Identity {
         this.projects = projects;
     }
 
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
     @Override
     public String toString() {
         return "CrEmployee{" +
+                "age=" + age + '\'' +
                 "name='" + name + '\'' +
                 ", salary=" + salary +
                 "} " + super.toString();

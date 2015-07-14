@@ -24,7 +24,6 @@ public class TestJPQLJoins extends BaseJPQLTest {
      */
     @Test
     public void testMapJoin() {
-        // TODO test map joins "SELECT e.name, KEY(p), VALUE(p) FROM Employee e JOIN e.phones p" where e.phones is map
         List<Object[]> results = em.createQuery("SELECT DISTINCT c.name, KEY(services), VALUE(services) FROM City c JOIN c.cityServicesNumbers services WHERE KEY(services) in ('101', '102')")
                 .getResultList();
         for (Object[] row : results) {

@@ -1,4 +1,4 @@
-package net.slisenko.jpa.examples.criteriaApi;
+package net.slisenko.jpa.examples.criteriaApi.metamodel;
 
 import net.slisenko.AbstractJpaTest;
 

@@ -1,11 +1,9 @@
 package net.slisenko.jpa.examples.criteriaApi;
 
 import junit.framework.Assert;
-import net.slisenko.AbstractJpaTest;
 import net.slisenko.jpa.examples.criteriaApi.model.CrAddress;
 import net.slisenko.jpa.examples.criteriaApi.model.CrEmployee;
-import net.slisenko.jpa.examples.criteriaApi.model.CrProject;
-import org.junit.Before;
+import net.slisenko.jpa.examples.criteriaApi.model.CrEmployeeAverage;
 import org.junit.Test;
 
 import javax.persistence.Tuple;
@@ -13,31 +11,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.List;
 
-public class TestCriteriaAPI extends AbstractJpaTest {
-
-    @Before
-    public void initData() {
-        // Clean existed data
-        em.getTransaction().begin();
-        em.createQuery("DELETE FROM CrEmployee").executeUpdate();
-        em.createQuery("DELETE FROM CrAddress").executeUpdate();
-        em.createQuery("DELETE FROM CrProject").executeUpdate();
-        em.createQuery("DELETE FROM CrPhone").executeUpdate();
-        em.getTransaction().commit();
-
-        em.getTransaction().begin();
-        CrEmployee employee = new CrEmployee("Anna", 1000);
-        CrEmployee employee2 = new CrEmployee("Elena", 3000);
-        CrAddress address = new CrAddress("Minsk", "Nemiga", "1");
-        employee.getProjects().add(new CrProject("project1"));
-        employee2.getProjects().add(new CrProject("project2"));
-        employee.setAddress(address);
-        employee2.setAddress(address);
-
-        em.persist(employee);
-        em.persist(employee2);
-        em.getTransaction().commit();
-    }
+public class TestCriteriaAPI extends BaseCriteriaAPITest {
 
     @Test
     public void testSimpleQuery() {
@@ -110,7 +84,7 @@ public class TestCriteriaAPI extends AbstractJpaTest {
         TypedQuery<Tuple> jpaQuery = em.createQuery(cq);
         List<Tuple> results = jpaQuery.getResultList();
         for (Tuple row : results) {
-            // We can get alues by aliases
+            // We can get values by aliases
             System.out.println(row.get(0) + "(" + row.get("nm") +  ")" + row.get(1) );
         }
         Assert.assertEquals(2, results.size());
@@ -133,52 +107,75 @@ public class TestCriteriaAPI extends AbstractJpaTest {
     }
 
     /**
-     * Get addresses of all employees which work
+     * Return multiple values constructing object
      */
     @Test
-    public void testJoins() {
+    public void testConstructAveragesObjectInQuery() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<CrAddress> cq = cb.createQuery(CrAddress.class);
-        Root<CrEmployee> rootEmployee = cq.from(CrEmployee.class);
-        Join<CrEmployee, CrProject> employeeToProjects = rootEmployee.join("projects");
-        Join<CrEmployee, CrAddress> employeeToAddress = rootEmployee.join("address");
-        cq.select(employeeToAddress);
-        cq.where(cb.equal(employeeToProjects.get("name"), "project1"));
+        CriteriaQuery<CrEmployeeAverage> c = cb.createQuery(CrEmployeeAverage.class);
+        Root<CrEmployee> employeeRoot = c.from(CrEmployee.class);
+        c.select(cb.construct(CrEmployeeAverage.class, employeeRoot.get("salary"), employeeRoot.get("age")));
 
-        List<CrAddress> addresses = em.createQuery(cq).getResultList();
-        System.out.println(addresses);
+        List<CrEmployeeAverage> employeeData = em.createQuery(c).getResultList();
+        System.out.println(employeeData);
     }
 
-    // TODO test join ON
+    @Test
+    public void testPredicatesAndParameters() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<CrEmployee> cq = cb.createQuery(CrEmployee.class);
+        Root<CrEmployee> empRoot = cq.from(CrEmployee.class);
+        Predicate criteria = cb.conjunction();
+        criteria = cb.and(criteria, cb.equal(empRoot.get("salary"), 1000));
 
-    // TODO test map join
+        ParameterExpression<Integer> p = cb.parameter(Integer.class, "age");
 
-    // TODO test predicates and parameters
+        criteria = cb.and(criteria, cb.equal(empRoot.get("age"), p));
+        cq.where(criteria);
 
-    // TODO subqueries
+        List<CrEmployee> employees = em.createQuery(cq).setParameter("age", 25).getResultList();
+        System.out.println(employees);
+    }
+
+    @Test
+    public void testSubqueries() {
+        // Get all employees where age > average
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<CrEmployee> cq = cb.createQuery(CrEmployee.class);
+        Root<CrEmployee> empRoot = cq.from(CrEmployee.class);
+        cq.select(empRoot);
+
+        Subquery<Double> sq = cq.subquery(Double.class);
+        Root<CrEmployee> sqEmpRoot = sq.from(CrEmployee.class);
+        sq.select(cb.avg(sqEmpRoot.<Double>get("age")));
+
+        cq.where(cb.ge(empRoot.<Integer>get("age"), sq));
+
+        List<CrEmployee> olderThanAverage = em.createQuery(cq).getResultList();
+        System.out.println(olderThanAverage);
+    }
+
+    @Test
+    public void testInExpression() {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<CrEmployee> cq = cb.createQuery(CrEmployee.class);
+        Root<CrEmployee> empRoot = cq.from(CrEmployee.class);
+        cq.select(empRoot).where(cb.in(empRoot.get("age")).value(25).value(30));
+
+        List<CrEmployee> employees = em.createQuery(cq).getResultList();
+        System.out.println(employees);
+    }
 
     // TODO hierarchies and downcasting
 
-    // TODO order by
-
-    /**
-     * Average salary by city
-     */
     @Test
-    public void testGroupByHaving() {
+    public void testOrderBy() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Object[]> cq = cb.createQuery(Object[].class);
-        Root<CrEmployee> employeeRoot = cq.from(CrEmployee.class);
-        Join<CrEmployee, CrAddress> employeeToAddress = employeeRoot.join("address");
-        cq.multiselect(cb.avg(employeeRoot.<Integer>get("salary")), cb.count(employeeRoot), employeeToAddress.get("city"))
-            .groupBy(employeeToAddress.get("city"))
-            .having(cb.ge(cb.avg(employeeRoot.<Integer>get("salary")), 100));
+        CriteriaQuery<CrEmployee> cq = cb.createQuery(CrEmployee.class);
+        Root<CrEmployee> empRoot = cq.from(CrEmployee.class);
+        cq.select(empRoot).orderBy(cb.desc(empRoot.get("age")));
 
-        List<Object[]> result = em.createQuery(cq).getResultList();
-        for (Object[] row : result) {
-            System.out.format("%s, %s, %s", row[0], row[1], row[2]);
-        }
+        List<CrEmployee> employees = em.createQuery(cq).getResultList();
+        System.out.println(employees);
     }
-
-    // TODO bulk update/delete
 }
