@@ -3,13 +3,14 @@ package net.slisenko;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
+import java.io.Serializable;
 
 /**
  * MappedSuperclass is not Entity. It does not have own table. We can not query it.
  * All columns are included in Entity class tables.
  */
 @MappedSuperclass
-public class Identity {
+public class Identity implements Serializable {
 
     @Id
     @GeneratedValue

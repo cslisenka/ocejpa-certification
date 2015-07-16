@@ -1,11 +1,9 @@
-<persistence xmlns="http://java.sun.com/xml/ns/persistence"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
-             version="2.0">
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd" version="2.0">
     <persistence-unit name="testJpaMySQL" transaction-type="RESOURCE_LOCAL">
         <!--
             1. Validation provider should be in classpath.
-            2. If validatino provider is container managed = AUTO, if not = CALLBACK
+            2. If validation provider is container managed = AUTO, if not = CALLBACK
         -->
         <validation-mode>CALLBACK</validation-mode>
         <properties>
@@ -13,16 +11,6 @@
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testjpa"/>
             <property name="javax.persistence.jdbc.user" value="root"/>
             <property name="javax.persistence.jdbc.password" value="root"/>
-
-            <!-- 2-nd level cache properties -->
-            <!-- TODO: enable only for cacle2 tests -->
-            <!--property name="hibernate.cache.use_second_level_cache" value="true"/>
-            <property name="hibernate.cache.use_query_cache" value="true"/>
-            <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
-
-            ENABLE_SELECTIVE - Cached only entities with @Cacheable(true)
-            DISABLE_SELECTIVE - Cached all entities except @Cacheable(false)
-            <property name="javax.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/-->
 
             <!-- Hibernate properties -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
@@ -40,7 +28,6 @@
         </properties>
     </persistence-unit>
     <persistence-unit name="testSecondLevelCache" transaction-type="RESOURCE_LOCAL">
-        <shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testjpa"/>
@@ -51,13 +38,12 @@
             <property name="hibernate.cache.use_second_level_cache" value="true"/>
             <property name="hibernate.cache.use_query_cache" value="true"/>
             <property name="hibernate.generate_statistics" value="true"/>
-            <!--property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/-->
             <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory"/>
             <property name="hibernate.cache.provider_configuration_file_resource_path" value="ehcache.xml" />
 
             <!-- ENABLE_SELECTIVE - Cached only entities with @Cacheable(true)
             DISABLE_SELECTIVE - Cached all entities except @Cacheable(false) -->
-            <!--property name="javax.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/-->
+            <property name="javax.persistence.sharedCache.mode" value="ENABLE_SELECTIVE"/>
 
             <!-- Hibernate properties -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
@@ -65,9 +51,6 @@
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
             <property name="hibernate.validator.apply_to_ddl" value="true"/>
-
-            <!--property name="hibernate.cache.provider_class" value="net.sf.ehcache.hibernate.EhCacheProvider" /-->
-            <property name="hibernate.cache.provider_configuration_file_resource_path" value="/ehcache.xml" />
         </properties>
     </persistence-unit>
     <persistence-unit name="testJpaPostgres" transaction-type="RESOURCE_LOCAL">
