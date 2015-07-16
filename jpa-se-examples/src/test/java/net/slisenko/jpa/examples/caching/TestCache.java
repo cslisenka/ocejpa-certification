@@ -3,20 +3,19 @@ package net.slisenko.jpa.examples.caching;
 import net.slisenko.AbstractJpaTest;
 import org.junit.Test;
 
-import javax.persistence.Cache;
-import javax.persistence.CacheRetrieveMode;
-import javax.persistence.CacheStoreMode;
-import javax.persistence.TypedQuery;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Cache structure:
  * Cache on application level
  * 1-st lvl cache => EntityManager context
- * 2-nd lvl cache => EntityManagerFactory cache (shared for all EntityManagers)
+ * 2-nd lvl cache => EntityManagerFactory cache (shared for all EntityManagers). Can be local and cluster.
  * Cache on JDBC level
  *
- * There is also a query cache
+ * Types of caches:
+ * 1. Entity cache (works with find())
+ * 2. Query cache - caches query results with query parameters
  *
  * http://blog.lauramamina.com/article?title=hibernate%20caching%20mechanisms
  * http://www.objectdb.com/java/jpa/persistence/cache#Setting_the_Shared_Cache_
@@ -45,61 +44,99 @@ import java.util.List;
 public class TestCache extends AbstractJpaTest {
 
     // TODO try caching in combination with javax.persistence.cache.retrieveMode
-    // TODO try use different entity managers and see if they use shared cache
 
-    // TODO create unit-test for 1-st level cache (EntityManager persistence context)
-
-    // TODO to demonstrate cache we need to call this test 2 times
     @Test
-    public void test() {
+    public void testCacheSimpleEntity() {
+        List<CachedEntity> entities = new ArrayList<>();
         em.getTransaction().begin();
-        em.persist(new CachedEntity());
-        em.persist(new CachedEntity());
-        em.persist(new NotCachedEntity());
-        em.persist(new NotCachedEntity());
+        // Create 20 CachedEntity objects
+        for (int i = 0; i < 20; i++) {
+            CachedEntity cachedEntity = new CachedEntity(String.format("cached entity %d", i));
+            entities.add(cachedEntity);
+            em.persist(cachedEntity);
+        }
         em.getTransaction().commit();
+        em.clear();
 
-        Cache cache = emf.getCache();
+        // Start query entities
+        System.out.println("========== SQL query which gets item and stores in cache ==========");
+        CachedEntity ce1 = em.find(CachedEntity.class, entities.get(0).getId());
+        System.out.println("====================");
 
-        // For me nothing was added to shared cache :(
-        List<CachedEntity> cachedEntities = em.createQuery("FROM CachedEntity").getResultList();
-        for (CachedEntity cached : cachedEntities) {
-            System.out.println("cached entity in cache = " + cache.contains(CachedEntity.class, cached.getId()));
-        }
+        System.out.println("========== No sql query should happen ==========");
+        em.clear();
+        ce1 = em.find(CachedEntity.class, entities.get(0).getId());
+        em.clear();
+        ce1 = em.find(CachedEntity.class, entities.get(0).getId());
+        em.clear();
+        ce1 = em.find(CachedEntity.class, entities.get(0).getId());
+        em.clear();
+        ce1 = em.find(CachedEntity.class, entities.get(0).getId());
+        System.out.println("====================");
 
-        List<NotCachedEntity> notCachedEntities = em.createQuery("FROM NotCachedEntity").getResultList();
-        for (NotCachedEntity notCached : notCachedEntities) {
-            System.out.println("not cached entity in cache = " + cache.contains(NotCachedEntity.class, notCached.getId()));
-        }
-
-        cache.evictAll();
-
-        cachedEntities = em.createQuery("FROM CachedEntity").getResultList();
-        for (CachedEntity cached : cachedEntities) {
-            System.out.println("cached entity in cache = " + cache.contains(CachedEntity.class, cached.getId()));
-        }
-
-        notCachedEntities = em.createQuery("FROM NotCachedEntity").getResultList();
-        for (NotCachedEntity notCached : notCachedEntities) {
-            System.out.println("not cached entity in cache = " + cache.contains(NotCachedEntity.class, notCached.getId()));
-        }
+        // Try get entity using second entity manager withoud SQL to database
+        // TODO Check that entity is stored in 2-nd level cache
+        // TODO Check that we can access cached data in 2 entity managers
     }
 
-    /**
-     * For each separate query we can owerride caching behaviour (for example - not use cache for some specific query)
-     * This settings are only for shared cache. If we have entity in 1-st level cache, this will not make any effect.
-     *
-     * TODO how to do this:
-     * REFRESH option must be turned on if we read database from something else
-     */
     @Test
-    public void testDynamicCacheManagement() {
-        // TODO investigate how to check this options
-        TypedQuery<CachedEntity> q = em.createQuery("FROM CachedEntity", CachedEntity.class);
-        // This query does not use cache when gets data, but updates cache for another queries
-        q.setHint("javax.persistence.cache.retrieveMode", CacheRetrieveMode.BYPASS); // Not use cache when get data from database
-        q.setHint("javax.persistence.cache.storeMode", CacheStoreMode.REFRESH); // Update cache after we got data
-        List<CachedEntity> cachedEntities = q.getResultList();
-        System.out.println(cachedEntities);
+    public void testQueryCache() {
+        // TODO use query hint for caching
+        //query.setHint(“org.hibernate.cacheable”, true);
     }
+
+
+//    // TODO to demonstrate cache we need to call this test 2 times
+//    @Test
+//    public void test() {
+//        em.getTransaction().begin();
+//        em.persist(new CachedEntity());
+//        em.persist(new CachedEntity());
+//        em.persist(new NotCachedEntity());
+//        em.persist(new NotCachedEntity());
+//        em.getTransaction().commit();
+//
+//        Cache cache = emf.getCache();
+//
+//        // For me nothing was added to shared cache :(
+//        List<CachedEntity> cachedEntities = em.createQuery("FROM CachedEntity").getResultList();
+//        for (CachedEntity cached : cachedEntities) {
+//            System.out.println("cached entity in cache = " + cache.contains(CachedEntity.class, cached.getId()));
+//        }
+//
+//        List<NotCachedEntity> notCachedEntities = em.createQuery("FROM NotCachedEntity").getResultList();
+//        for (NotCachedEntity notCached : notCachedEntities) {
+//            System.out.println("not cached entity in cache = " + cache.contains(NotCachedEntity.class, notCached.getId()));
+//        }
+//
+//        cache.evictAll();
+//
+//        cachedEntities = em.createQuery("FROM CachedEntity").getResultList();
+//        for (CachedEntity cached : cachedEntities) {
+//            System.out.println("cached entity in cache = " + cache.contains(CachedEntity.class, cached.getId()));
+//        }
+//
+//        notCachedEntities = em.createQuery("FROM NotCachedEntity").getResultList();
+//        for (NotCachedEntity notCached : notCachedEntities) {
+//            System.out.println("not cached entity in cache = " + cache.contains(NotCachedEntity.class, notCached.getId()));
+//        }
+//    }
+//
+//    /**
+//     * For each separate query we can owerride caching behaviour (for example - not use cache for some specific query)
+//     * This settings are only for shared cache. If we have entity in 1-st level cache, this will not make any effect.
+//     *
+//     * TODO how to do this:
+//     * REFRESH option must be turned on if we read database from something else
+//     */
+//    @Test
+//    public void testDynamicCacheManagement() {
+//        // TODO investigate how to check this options
+//        TypedQuery<CachedEntity> q = em.createQuery("FROM CachedEntity", CachedEntity.class);
+//        // This query does not use cache when gets data, but updates cache for another queries
+//        q.setHint("javax.persistence.cache.retrieveMode", CacheRetrieveMode.BYPASS); // Not use cache when get data from database
+//        q.setHint("javax.persistence.cache.storeMode", CacheStoreMode.REFRESH); // Update cache after we got data
+//        List<CachedEntity> cachedEntities = q.getResultList();
+//        System.out.println(cachedEntities);
+//    }
 }

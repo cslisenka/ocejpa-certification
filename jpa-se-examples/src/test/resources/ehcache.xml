@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ehcache.xsd"
+     updateCheck="true" monitoring="autodetect" dynamicConfig="true">
+
+    <!-- TODO http://techblog.personalcapital.com/2014/04/hibernate-second-level-cache-using-ehcache/ -->
+
+    <!-- TODO -->
+    <diskStore path="java.io.tmpdir/hibernateCache" />
+
+    <!-- If no matching cache for entity/query found, Hibernate uses default cache -->
+    <defaultCache maxElementsInMemory="100" diskPersistent="false"/>
+
+    <cache name="net.slisenko.jpa.examples.caching.CachedEntity" maxElementsInMemory="10"
+           eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3600" overflowToDisk="false"/>
+
+</ehcache>
