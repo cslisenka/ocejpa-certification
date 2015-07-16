@@ -2,7 +2,9 @@ package net.slisenko;
 
 import org.hibernate.jpa.internal.EntityManagerFactoryImpl;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -19,7 +21,7 @@ public class AbstractJpaTest {
      * Heavy object, contains connections, objects cache, configuration parameters.
      * 2-nd level cache.
      */
-    protected EntityManagerFactory emf;
+    protected static EntityManagerFactory emf;
 
     /**
      * Lightweight object which created one time per database interaction session.
@@ -30,24 +32,33 @@ public class AbstractJpaTest {
      */
     protected EntityManager em;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void prepareEntityManagerFactory() {
         // Create entity manager factory from persistence unit
         emf = Persistence.createEntityManagerFactory(CACHE);
+    }
+
+    @Before
+    public void prepareEntityManager() {
         // Create entity manager
         em = emf.createEntityManager();
     }
 
     @After
-    public void tearDown() {
+    public void printStatisticAndCloseEntityManager() {
         // Print hibernate statistics
+        System.out.println("========== Hibernate statistics ==========");
         EntityManagerFactoryImpl empImpl = (EntityManagerFactoryImpl) emf;
         System.out.println(empImpl.getSessionFactory().getStatistics());
+        System.out.println("========== ==========");
 
         if (em.isOpen()) {
             em.close();
         }
+    }
 
+    @AfterClass
+    public static void closeEntityManagerFactory() {
         if (emf.isOpen()) {
             emf.close();
         }

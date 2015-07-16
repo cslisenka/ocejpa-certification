@@ -18,7 +18,7 @@
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
             <property name="hibernate.validator.apply_to_ddl" value="true"/>
-            <property name="hibernate.generate_statistics" value="true"/>
+            <!--property name="hibernate.generate_statistics" value="true"/-->
 
             <!--property name="org.hibernate.flushMode" value="MANUAL"/-->
             <!--property name="hibernate.connection.isolation" value="1"/--> <!-- ISOLATION_READ_UNCOMMITED -->
@@ -28,6 +28,7 @@
         </properties>
     </persistence-unit>
     <persistence-unit name="testSecondLevelCache" transaction-type="RESOURCE_LOCAL">
+        <shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testjpa"/>
@@ -38,7 +39,10 @@
             <property name="hibernate.cache.use_second_level_cache" value="true"/>
             <property name="hibernate.cache.use_query_cache" value="true"/>
             <property name="hibernate.generate_statistics" value="true"/>
-            <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory"/>
+            <!--
+                Prefer using EhCacheRegionFactory instead of SingletonEhCacheRegionFactory. Using EhCacheRegionFactory means that Hibernate will create separate cache regions for Hibernate caching, instead of trying to reuse cache regions defined elsewhere in the application.
+            -->
+            <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory "/>
             <property name="hibernate.cache.provider_configuration_file_resource_path" value="ehcache.xml" />
 
             <!-- ENABLE_SELECTIVE - Cached only entities with @Cacheable(true)
