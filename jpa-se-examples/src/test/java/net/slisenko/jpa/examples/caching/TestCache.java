@@ -14,26 +14,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cache structure:
- * Cache on application level
- * 1-st lvl cache => EntityManager context
- * 2-nd lvl cache => EntityManagerFactory cache (shared for all EntityManagers). Can be local and cluster.
- * Cache on JDBC level
+ * JPA cache structure:
+ *      1-st lvl: EntityManager
+ *      2-nd level: EntityManagerFactory
+ *          - external cache provider (EHCache, ...), can be local or clustered
+ *          - shared between entity managers
+ *      JDBC caching (transparently for programmer)
  *
  * Types of caches:
- * 1. Entity cache (works with find())
- * 2. Query cache - caches query results with query parameters*
+ *      Entity cache - caches entity attributes (not entity objects!), constructs entity objects for each request
+ *          [id -> entity]
+ *          relationships are not stored by default, we need to specify their caching explicitly, if so, cache only
+ *          stores relationships ids
+ *          [id -> entity,relationships{1, 2, 3}]
+ *      Query cache - caches query results
+ *          [query,parameters -> query results]
+ *          only stores IDs of entities, they are resolved using Entity cache, primitive types stored as they are
+ *          query cache is effective only when we execute one query many times with same parameters (because key is query+parameters)
  *
- * Кеш запросов содержит только ID-шники (если запрашивали сущности). Значения же берутся из обычного кеша.
- * Если запрос был на примитивные типы, то они прямо ложатся в кеш запросов!
+ * Different kinds of data need different cache policies (or not cache at all). That's why 2-nd level cache
+ * configuration can be specified for each entity separately.
  *
- * Различные виды данных требуют различной политики кэширования: соотношение чтение к записи изменяется, размер БД изменяется, и  некоторые таблицы используются
- * совместно с другими приложениями. Так что, кэш второго уровня настраиваемся под детализацию каждого индивидуального класса или коллекцию ролей. Это позволяет,
- * например, разрешить кэш второго уровня для справочных данных и запретить его для классов, представляющих финансовые записи.
+ * Cache use cases:
+ *      + Read-only data, immutable data (not updated), reference books
+ *      - Data which often updated, data which needed to be always actual
  *
- * кэш-память, как правило полезно только для классов, которые по большинству считываются. Если у вас есть данные, которые обновляются чаще, чем читаются,
- * не разрешайте кэш второго уровня, даже если все остальные условия для кэширования верны! Кроме того, кэш второго уровня может быть опасен в системах,
- * которые разделяют данные с другими приложениями, которые могут эти данные изменить.
+ * Caching problems:
+ *      - If another application changes data in database, we can not use 2-nd level cache because we will get stale data in cache.
+ *          (we need to set up expiration policies for data if this is allowed by requirements)
+*       - Entity cache expired, but query cache isn't. When we execute queries, hibernate sends series of queries to get
+ *          single entity to database.
+ *          (expiration time for query cache should be less than entity cache)
+ *      - В случае иерархий применяются настройки стратегии только указанной на базовой сушности
  *
  * Параметры кеша 2:
  * 1. Стратегия параллелизма - как изолированы транзакции
@@ -48,27 +60,15 @@ import java.util.List;
  *      - SwarmCache - кластерный кеш
  *      - JBossCache - транзакционно-репликационный кластерный кеш
  *
- * Кеш не видит изменений, которые делает в базе другое приложение. Единственный способ борьбы с этим - настройка expiration.
- *
  * Проблемы кеширования:
- * 1. Кеш запросов возврашает только id-шники, если в кеше объектов этих сущностей нет, то в базу идёт куча запросов на ID (TODO проверить)
- *      Нужно настраивать чтобы кеш запросов инвалидировался чаще, чем кеш сушностей
- * 2. В случае иерархий применяются настройки стратегии только указанной на базовой сушности
- *
  * http://planet.jboss.org/post/collection_caching_in_the_hibernate_second_level_cache
  * http://www.javalobby.org/java/forums/t48846.html
  * http://docs.jboss.org/hibernate/orm/3.5/reference/en/html/performance.html
  *
- * Кеш не сохраняет сущности как есть, кеш хранит структуры, из которых создаются новые сущности при запросе.
- * Пример:
- * [1, 'name', 'something', others={}]
- * Связи сохраняются если они специально помечены @Cache
- * [1, 'name', 'something', others={1, 2, 3}]
- *
+ * Кеш запросов возврашает только id-шники, если в кеше объектов этих сущностей нет, то в базу идёт куча запросов на ID (TODO проверить)
  * Кеш запросов сохраняет возвращаемые значения по запросу+параметрам, его имеет смысл включать только если у нас выполняется один и тот же запрос постоянно. Если постоянно выполняются
  * разные запросы, то кеш никакого эффекта не даст.
  * TODO вытянуть одну и ту же сущность по имени и по другому параметру. Убедиться что мы промазываем мимо кеша.
- *
  * TODO провешировать сущность, потом её модифицировать, и опять считать. Посмотреть что будет.
  */
 public class TestCache extends AbstractJpaTest {
