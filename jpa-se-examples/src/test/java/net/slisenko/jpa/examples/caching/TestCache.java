@@ -78,18 +78,8 @@ public class TestCache extends AbstractJpaTest {
     @BeforeClass
     public static void initData() {
         EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.createQuery("DELETE FROM CachedEntity c").executeUpdate();
-        em.getTransaction().commit();
-
-        em.getTransaction().begin();
-        // Create 20 CachedEntity objects
-        for (int i = 0; i < 20; i++) {
-            CachedEntity cachedEntity = new CachedEntity(String.format("cached entity %d", i));
-            entities.add(cachedEntity);
-            em.persist(cachedEntity);
-        }
-        em.getTransaction().commit();
+        cleanAll(em);
+        insertCachedEntities(em);
         em.close();
     }
 
@@ -115,58 +105,68 @@ public class TestCache extends AbstractJpaTest {
 
     /**
      * Связь к одному
-     *      Если relationship=eager, то обе сущности должны быть @Cache, иначе никакого кеша не будет (связь @Cache можно не помечать)
-     *      Если relationship=lazy, то кешируется только основная сущность, если мы обращаемся по связи - то идёт запрос в базу.
-     *      TODO кешировать LAZY не получилось, нужно почитать разобраться
+     *      Т.к. связь находится в одном и том же объекте, то достаточно сделать обе сущности @Cache
+     *      В случае eager - всё работает сразу
+     *      В случае lazy - кеширование для связи будет работать только если она была принудительно проинициилизирована.
      */
     @Test
     public void testSingleRelationship() {
         // Prepare cached entity with relationship
         em.getTransaction().begin();
         CachedEntity cachedEntity = new CachedEntity("entity");
-        CachedEntityRelationship relationship = new CachedEntityRelationship("relationship");
-//        cachedEntity.setRelationshipEager(relationship);
-        cachedEntity.setRelationshipLazy(relationship);
+        cachedEntity.setRelationshipEager(new CachedEntityRelationship("eager"));
+        cachedEntity.setRelationshipLazy(new CachedEntityRelationship("lazy"));
         em.persist(cachedEntity);
         em.getTransaction().commit();
         em.clear();
 
         System.out.println("========== Get entity with relationship first time ==========");
         em.find(CachedEntity.class, cachedEntity.getId());
-        // TODO перейти по LAZY-связи чтобы она прокешировалась! потом проверить что хибернейт достаёт её из кеша
+        // If relationship is lazy, we need to force it querying. After that relationship will be in cache.
+        cachedEntity.getRelationshipLazy();
         em.clear();
 
         System.out.println("========== Get entity with relationship second time (no SQL works) ==========");
         CachedEntity entity = em.find(CachedEntity.class, cachedEntity.getId());
         System.out.println(entity);
         System.out.println("========== Get relationship ==========");
-//        System.out.println(entity.getRelationshipLazy());
-//        System.out.println(entity.getRelationshipEager());
+        System.out.println(entity.getRelationshipLazy());
+        System.out.println(entity.getRelationshipEager());
         System.out.println("========== ==========");
     }
 
     /**
-     * Тут что lazy что eager - кеширует только саму сущность. За связями идёт в базу. TODO разобраться почему
+     * Если используется join-таблица, то кеширование не заработало. TODO понять почему
+     *
+     * Если связь на стороне другой сущности, то на коллекцию нужно ставить @Cached. Тогда кеш сохраняет список ID-шников.
      */
     @Test
     public void testCollectionRelationship() {
         em.getTransaction().begin();
         CachedEntity c = new CachedEntity("entity");
-        c.getList().add(new CachedEntityRelationship("rel1"));
-        c.getList().add(new CachedEntityRelationship("rel2"));
-        c.getList().add(new CachedEntityRelationship("rel3"));
         em.persist(c);
+        CachedEntityRelationship rel1 = new CachedEntityRelationship("rel1");
+        rel1.setEntity(c);
+        em.persist(rel1);
+        CachedEntityRelationship rel2 = new CachedEntityRelationship("rel2");
+        rel2.setEntity(c);
+        em.persist(rel2);
+        CachedEntityRelationship rel3 = new CachedEntityRelationship("rel3");
+        rel3.setEntity(c);
+        em.persist(rel3);
         em.getTransaction().commit();
         em.clear();
 
         System.out.println("========== Get entity first time ==========");
-        em.find(CachedEntity.class, c.getId());
+        c = em.find(CachedEntity.class, c.getId());
+        System.out.println("========== Get relationship list first time ==========");
+        System.out.println(c.getListBack());
         em.clear();
 
         System.out.println("========== Get entity second time (cache usage, no SQL executed) ==========");
         CachedEntity e = em.find(CachedEntity.class, c.getId());
-        System.out.println("========== Get entity relationships ==========");
-        System.out.println(e.getList());
+        System.out.println("========== Get entity relationships (cache usage, no SQL executed) ==========");
+        System.out.println(e.getListBack());
     }
 
     @Test
@@ -204,8 +204,75 @@ public class TestCache extends AbstractJpaTest {
         System.out.println("====================");
     }
 
+    @Test
+    public void testQueryCacheWhenEntityCacheIsEmpty() {
+
+        // TODO сделать Assert.assertTrue(fmg.getCache().contains(...)) чтобы убедиться что нужные сущности есть в кеше, а ненужных - нет
+        cleanAll(em);
+        insertCachedEntities(em);
+        // Init Entity cache
+        System.out.println("========== Query entities and cache them ==========");
+        for (CachedEntity ce : entities) {
+            em.find(CachedEntity.class, ce.getId());
+        }
+        em.clear();
+
+        System.out.println("========== Query entities second time (no SQL happens, cache used) ==========");
+        for (CachedEntity ce : entities) {
+            System.out.println(emf.getCache().contains(CachedEntity.class, ce.getId()));
+        }
+        em.clear();
+
+        System.out.println("========== Get entities first time using query ==========");
+        List<CachedEntity> result = em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                .setHint("org.hibernate.cacheable", true)
+//                .setParameter("id", oneEntity.getId())
+                .getResultList();
+//        System.out.println(result);
+        em.clear();
+
+        System.out.println("========== Get entities second time using query (no SQL happens, cache used) ==========");
+        result = em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                .setHint("org.hibernate.cacheable", true)
+//                .setParameter("id", oneEntity.getId())
+                .getResultList();
+//        System.out.println(result);
+        em.clear();
+
+        emf.getCache().evictAll();
+
+        System.out.println("========== Get entities after CachedEntity evicted from entity cache (lots of SQL used!) ==========");
+        result = em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                .setHint("org.hibernate.cacheable", true)
+//                .setParameter("id", oneEntity.getId())
+                .getResultList();
+//        System.out.println(result);
+        em.clear();
+    }
+
     @After
     public void evictCache() {
         emf.getCache().evictAll();
+    }
+
+    public static void cleanAll(EntityManager em) {
+        em.getTransaction().begin();
+        em.createQuery("DELETE FROM CachedEntityRelationship c").executeUpdate();
+        em.createQuery("DELETE FROM CachedEntity c").executeUpdate();
+        em.getTransaction().commit();
+        em.clear();
+    }
+
+    public static void insertCachedEntities(EntityManager em) {
+        entities.clear();
+        em.getTransaction().begin();
+        // Create 20 CachedEntity objects
+        for (int i = 0; i < 20; i++) {
+            CachedEntity cachedEntity = new CachedEntity(String.format("cached entity %d", i));
+            entities.add(cachedEntity);
+            em.persist(cachedEntity);
+        }
+        em.getTransaction().commit();
+        em.clear();
     }
 }

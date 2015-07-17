@@ -16,17 +16,25 @@ import java.util.List;
 public class CachedEntity extends Identity {
 
     /**
-     * TODO Associations can also be cached by the second level cache, but by default this is not done. In order to enable caching of an association, we need to apply @Cache to the association itself
+     * @Cache not required here because foreign key is on entity side. If we use join table, we need to set @Cache annotation.
      */
-//    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Transient
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     protected CachedEntityRelationship relationshipEager;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Transient
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     protected CachedEntityRelationship relationshipLazy;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    // TODO Cache doesn't work for this relationship because join table used
+//    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+//    @OneToMany(cascade = CascadeType.ALL)
+    @Transient
     protected List<CachedEntityRelationship> list = new ArrayList<>();
+
+    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+    @OneToMany(mappedBy = "entity", fetch = FetchType.LAZY)
+    protected List<CachedEntityRelationship> listBack = new ArrayList<>();
 
     public CachedEntity() {
     }
@@ -57,5 +65,13 @@ public class CachedEntity extends Identity {
 
     public void setList(List<CachedEntityRelationship> list) {
         this.list = list;
+    }
+
+    public List<CachedEntityRelationship> getListBack() {
+        return listBack;
+    }
+
+    public void setListBack(List<CachedEntityRelationship> listBack) {
+        this.listBack = listBack;
     }
 }

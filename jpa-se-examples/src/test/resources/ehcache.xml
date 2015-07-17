@@ -24,13 +24,13 @@
         timeToIdleSeconds - timeout for not used items are removed from cache
         timeToLiveSeconds - timeout each item removed from cache
     -->
-    <cache name="net.slisenko.jpa.examples.caching.CachedEntity" maxElementsInMemory="10"
+    <cache name="net.slisenko.jpa.examples.caching.CachedEntity" maxElementsInMemory="1000"
            eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
 
-    <cache name="net.slisenko.jpa.examples.caching.CachedEntity.relationship" maxElementsInMemory="10"
+    <cache name="net.slisenko.jpa.examples.caching.CachedEntity.relationship" maxElementsInMemory="1000"
            eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
 
-    <cache name="net.slisenko.jpa.examples.caching.CachedEntityRelationship" maxElementsInMemory="10"
+    <cache name="net.slisenko.jpa.examples.caching.CachedEntityRelationship" maxElementsInMemory="1000"
            eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
 
 
@@ -38,7 +38,7 @@
         Query cache in Hibernate
     -->
     <cache name="org.hibernate.cache.internal.StandardQueryCache" maxElementsInMemory="5000"
-           eternal="false" timeToIdleSeconds="0" timeToLiveSeconds="300"
+           eternal="false" timeToIdleSeconds="1800" timeToLiveSeconds="3000"
            overflowToDisk="false" diskExpiryThreadIntervalSeconds="60" memoryStoreEvictionPolicy="LRU" />
 
     <!--
