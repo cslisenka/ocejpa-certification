@@ -9,8 +9,12 @@
     -->
 
     <!--
+        Disk store is optional, we can disable it.
+
         Directory where ehcache stores cached entities in case of full memory
         Useful when database is on another server with slow connection
+
+        path - direcroty for cache, we can use system variables here: user.home, user.dir, java.io.tmpdir
      -->
     <diskStore path="java.io.tmpdir/hibernateCache" />
 
@@ -20,22 +24,28 @@
     <!--
         Cache regions: we need to define regions for specific entities. If no region defined, default cache used.
 
-        eternal = true - disable remove entities by timeout
-        timeToIdleSeconds - timeout for not used items are removed from cache
-        timeToLiveSeconds - timeout each item removed from cache
+        eternal = true - disable remove entities by timeout (timeToIdle and timeToLice are ignored)
+        timeToIdleSeconds - maximm time which element exists in cache not being accessed, 0=infinity
+        timeToLiveSeconds - maximum time which element exists in cache, 0=infinity
+
+        maxEntriesLocalHeap (maxBytesLocalHeap) - maximum elements in heap
+        maxEntriesLocalDisk (maxBytesLocalDisk) - maximum elements in disk
     -->
     <cache name="net.slisenko.jpa.examples.caching.CachedEntity" maxElementsInMemory="1000"
-           eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
+           eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"
+            />
 
     <cache name="net.slisenko.jpa.examples.caching.CachedEntity.relationship" maxElementsInMemory="1000"
            eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
 
     <cache name="net.slisenko.jpa.examples.caching.CachedEntityRelationship" maxElementsInMemory="1000"
-           eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false"/>
+           eternal="true" timeToIdleSeconds="1800" timeToLiveSeconds="3000" overflowToDisk="false" />
 
 
     <!--
-        Query cache in Hibernate
+        Settings for query cache
+
+        It is also possible to set specific cache settings for each named query
     -->
     <cache name="org.hibernate.cache.internal.StandardQueryCache" maxElementsInMemory="5000"
            eternal="false" timeToIdleSeconds="1800" timeToLiveSeconds="3000"

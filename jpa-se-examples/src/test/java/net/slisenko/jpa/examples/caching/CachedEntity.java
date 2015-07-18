@@ -8,7 +8,6 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO region="yourEntityCache"
 @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 // TODO doesn't work for me
 //@Cacheable
@@ -18,12 +17,12 @@ public class CachedEntity extends Identity {
     /**
      * @Cache not required here because foreign key is on entity side. If we use join table, we need to set @Cache annotation.
      */
-    @Transient
-//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     protected CachedEntityRelationship relationshipEager;
 
-    @Transient
-//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     protected CachedEntityRelationship relationshipLazy;
 
     // TODO Cache doesn't work for this relationship because join table used
