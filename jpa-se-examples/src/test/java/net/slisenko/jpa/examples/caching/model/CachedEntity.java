@@ -1,4 +1,4 @@
-package net.slisenko.jpa.examples.caching;
+package net.slisenko.jpa.examples.caching.model;
 
 import net.slisenko.Identity;
 import org.hibernate.annotations.Cache;
@@ -32,7 +32,7 @@ public class CachedEntity extends Identity {
     protected List<CachedEntityRelationship> list = new ArrayList<>();
 
     @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
-    @OneToMany(mappedBy = "entity", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "entity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     protected List<CachedEntityRelationship> listBack = new ArrayList<>();
 
     public CachedEntity() {

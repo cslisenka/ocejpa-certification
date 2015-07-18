@@ -3,6 +3,7 @@ package net.slisenko.jpa.examples.caching;
 import junit.framework.Assert;
 import net.slisenko.AbstractJpaTest;
 import net.slisenko.Identity;
+import net.slisenko.jpa.examples.caching.model.CachedEntity;
 import org.junit.After;
 import org.junit.Before;
 
@@ -47,7 +48,11 @@ public class BaseCacheTest extends AbstractJpaTest {
 
     public static void cleanAll(EntityManager em) {
         em.getTransaction().begin();
-        em.createQuery("DELETE FROM CachedEntity c").executeUpdate();
+        List<CachedEntity> ces = em.createQuery("SELECT ce FROM CachedEntity ce", CachedEntity.class).getResultList();
+        for (CachedEntity c : ces) {
+            em.remove(c);
+        }
+
         em.createQuery("DELETE FROM CachedEntityRelationship c").executeUpdate();
         em.getTransaction().commit();
         em.clear();

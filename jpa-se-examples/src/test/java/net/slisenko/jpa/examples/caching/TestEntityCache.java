@@ -1,14 +1,10 @@
 package net.slisenko.jpa.examples.caching;
 
-import junit.framework.Assert;
-import net.slisenko.AbstractJpaTest;
-import org.junit.After;
-import org.junit.BeforeClass;
+import net.slisenko.jpa.examples.caching.model.CachedEntity;
+import net.slisenko.jpa.examples.caching.model.CachedEntityRelationship;
 import org.junit.Test;
 
 import javax.persistence.EntityManager;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * JPA cache structure:

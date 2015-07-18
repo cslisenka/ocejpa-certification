@@ -1,4 +1,4 @@
-package net.slisenko.jpa.examples.caching;
+package net.slisenko.jpa.examples.caching.model;
 
 import net.slisenko.Identity;
 
