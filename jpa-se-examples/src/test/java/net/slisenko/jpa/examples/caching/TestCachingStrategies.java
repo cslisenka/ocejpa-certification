@@ -70,6 +70,10 @@ public class TestCachingStrategies extends BaseCacheTest {
       * https://anirbanchowdhury.wordpress.com/2012/07/23/hibernate-second-level-cache-ehcache/
       *http://vladmihalcea.com/2015/05/18/how-does-hibernate-nonstrict_read_write-cacheconcurrencystrategy-work/
       * http://vladmihalcea.com/2015/05/25/how-does-hibernate-read_write-cacheconcurrencystrategy-work/
+      * http://vladmihalcea.com/2015/04/27/how-does-hibernate-read_only-cacheconcurrencystrategy-work/
+      * http://vladmihalcea.com/2015/04/16/things-to-consider-before-jumping-to-enterprise-caching/
+      * http://vladmihalcea.com/2014/03/03/caching-best-practices/
+      * http://vladmihalcea.com/2015/04/20/a-beginners-guide-to-cache-synchronization-strategies/
       */
      @Test
      public void testReadWrite() {
