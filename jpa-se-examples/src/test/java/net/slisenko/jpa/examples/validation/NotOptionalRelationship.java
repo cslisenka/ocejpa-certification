@@ -16,7 +16,7 @@ public class NotOptionalRelationship extends Identity {
 
     @Override
     public String toString() {
-        return "NotOptionalRelationship{" +
+        return "NotOptionalEntity{" +
                 "name='" + name + '\'' +
                 "} " + super.toString();
     }
