@@ -1,4 +1,4 @@
-package net.slisenko.jpa.examples.nativesql;
+package net.slisenko.jpa.examples.queries.nativesql;
 
 import net.slisenko.Identity;
 

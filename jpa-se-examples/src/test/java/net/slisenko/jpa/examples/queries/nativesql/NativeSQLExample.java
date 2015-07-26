@@ -1,10 +1,10 @@
-package net.slisenko.jpa.examples.nativesql;
+package net.slisenko.jpa.examples.queries.nativesql;
 
 import net.slisenko.AbstractJpaTest;
 import net.slisenko.jpa.examples.JPAUtil;
+import org.junit.Before;
 import org.junit.Test;
 
-import javax.persistence.NamedNativeQuery;
 import java.util.List;
 
 /**
@@ -23,34 +23,44 @@ import java.util.List;
 
 public class NativeSQLExample extends AbstractJpaTest {
 
-    @Test
-    public void test() {
+    @Before
+    public void init() {
         em.getTransaction().begin();
         em.persist(new NativeEmployee("native employee 1"));
         em.persist(new NativeEmployee("native employee 2"));
         em.persist(new NativeEmployee("native employee 3"));
         em.getTransaction().commit();
         em.clear();
+    }
 
-        /*
-            1. No mapping provided
-            2. Entities do not become managed in Persistence Context
-         */
+    /**
+     * 1. No mapping provided
+     * 2. Entities do not become managed in Persistence Context
+     */
+    @Test
+    public void testNativeSQLWithoutMapping() {
         List nativeQueryResults = em.createNativeQuery("SELECT * FROM native_employee_table").getResultList();
-        System.out.println(nativeQueryResults);
-        JPAUtil.printContext(em);
-
-        /*
-            1. Mapping to entity works
-            2. Returned entities become managed with persistence context
-         */
-        List<NativeEmployee> nativeEmployees = em.createNamedQuery("getAllNativeEmployees", NativeEmployee.class).getResultList();
-        System.out.println(nativeEmployees);
+        p(nativeQueryResults);
         JPAUtil.printContext(em);
     }
 
     /**
-     * Any natice SQL query can be mapped to several JPA entities
+     * 1. Mapping to entity works
+     * 2. Returned entities become managed with persistence context
+     */
+    @Test
+    public void testNativeQueryWithMapping() {
+        List<NativeEmployee> nativeEmployees = em.createNativeQuery("SELECT * FROM native_employee_table", NativeEmployee.class).getResultList();
+        p(nativeEmployees);
+        JPAUtil.printContext(em);
+
+        nativeEmployees = em.createNamedQuery("getAllNativeEmployees", NativeEmployee.class).getResultList();
+        p(nativeEmployees);
+        JPAUtil.printContext(em);
+    }
+
+    /**
+     * Any native SQL query can be mapped to several JPA entities
      */
     @Test
     public void testSqlResultSetMapping() {
