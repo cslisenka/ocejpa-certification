@@ -36,8 +36,12 @@ public class EntityWithTypes extends Identity {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "country", column = @Column(name = "strana")),
-            @AttributeOverride(name = "city", column = @Column(name = "gorod"))
+        @AttributeOverride(name = "country", column = @Column(name = "strana")),
+        @AttributeOverride(name = "city", column = @Column(name = "gorod"))
+    })
+    // Works only when we define @JoinColumn in MyEmbeddedObject type
+    @AssociationOverrides({
+        @AssociationOverride(name = "entity", joinColumns = @JoinColumn(name = "overriden"))
     })
     private MyEmbeddedObject embedded;
 

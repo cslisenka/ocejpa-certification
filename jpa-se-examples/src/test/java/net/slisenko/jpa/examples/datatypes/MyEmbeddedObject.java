@@ -1,12 +1,18 @@
 package net.slisenko.jpa.examples.datatypes;
 
 import javax.persistence.Embeddable;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 
 @Embeddable
 public class MyEmbeddedObject {
 
     private String country;
     private String city;
+
+    @OneToOne
+    @JoinColumn(name = "link")
+    private EntityWithTypes entity;
 
     public MyEmbeddedObject() {
     }
@@ -30,5 +36,13 @@ public class MyEmbeddedObject {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public EntityWithTypes getEntity() {
+        return entity;
+    }
+
+    public void setEntity(EntityWithTypes entity) {
+        this.entity = entity;
     }
 }
