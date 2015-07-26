@@ -7,10 +7,13 @@ import org.junit.Test;
 import javax.persistence.PersistenceException;
 import java.util.List;
 
+/**
+ * If we configured generator, we can not assign values manually.
+ */
 public class PKGenerationTest extends AbstractJpaTest {
 
     /**
-     * Manyally assigned IDs
+     * Manually assigned IDs
      */
     @Test
     public void testNoIdGeneration() {
@@ -62,8 +65,6 @@ public class PKGenerationTest extends AbstractJpaTest {
         em.persist(manuallyId);
         em.getTransaction().commit();
     }
-
-    // TODO try set ID manually and see what happens
 
     /**
      * Hibernate gets last sequence value from hibernate_sequences table.

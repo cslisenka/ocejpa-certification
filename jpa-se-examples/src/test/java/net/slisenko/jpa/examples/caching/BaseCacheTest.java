@@ -42,10 +42,6 @@ public class BaseCacheTest extends AbstractJpaTest {
         Assert.assertFalse(emf.getCache().contains(entity.getClass(), entity));
     }
 
-    static void p(Object text) {
-        System.out.println(text);
-    }
-
     public static void cleanAll(EntityManager em) {
         em.getTransaction().begin();
         List<CachedEntity> ces = em.createQuery("SELECT ce FROM CachedEntity ce", CachedEntity.class).getResultList();

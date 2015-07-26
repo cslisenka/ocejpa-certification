@@ -63,4 +63,8 @@ public class AbstractJpaTest {
             emf.close();
         }
     }
+
+    public static void p(Object text) {
+        System.out.println(text);
+    }
 }
