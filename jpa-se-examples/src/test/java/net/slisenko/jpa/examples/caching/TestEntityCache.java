@@ -15,7 +15,7 @@ import javax.persistence.EntityManager;
  *      JDBC caching (transparently for programmer)
  *
  * Types of caches:
- *      Entity cache - caches entity attributes (not entity objects!), constructs entity objects for each request
+ *      Entity cache - caches entity attributes (not entity objects!, this called hydrated), constructs entity objects for each request
  *          [id -> entity]
  *          relationships are not stored by default, we need to specify their caching explicitly, if so, cache only
  *          stores relationships ids
@@ -39,6 +39,7 @@ import javax.persistence.EntityManager;
  *          single entity to database.
  *          (expiration time for query cache should be less than entity cache)
  *      - В случае иерархий применяются настройки стратегии только указанной на базовой сушности
+ *      - Неверно настроенная стратегия кеша может ослабить уровень изоляции в БД (NONSTRICT READ WRITE сделает не выше read commited (ато иногда и dirty read), READ_WRITE - сделает не выше repeatable read)
  *
  * Параметры кеша 2:
  * 1. Стратегия параллелизма - как изолированы транзакции
@@ -68,6 +69,8 @@ import javax.persistence.EntityManager;
  *
  * Ehcache
  *      - Использует java heap space или local disk storage
+ *
+ * @Cacheable аннотация, которая используется в JPA не позволяет задать стратегию кеширования для конкретной сущности
  */
 public class TestEntityCache extends BaseCacheTest {
 
@@ -75,15 +78,27 @@ public class TestEntityCache extends BaseCacheTest {
     public void testCacheSimpleEntity() {
         // Start query entities
         p("========== Get entity first time, SQL works and populates cache ==========");
+        em.getTransaction().begin();
         CachedEntity entity = em.find(CachedEntity.class, entities.get(0).getId());
         assertCached(entity);
+        em.getTransaction().commit();
+        em.clear();
 
+        // Почему-то если создавать новый EntityManager, то мы идём в кеш, а если пользоваться старым - то берём из базы
+        // Это если READ_WRITE
+        // NONSTRICT_READ_WRITE берёт свободней из кеша
+        // READ_WRITE уровень изоляции позволяет читать из кеша только если сессия стартовала позже, чем была создана запись в кеше
+
+        // TODO может быть это связано с хибернейтовской сессией?
         p("========== Get entity second time, no SQL query should happen ==========");
+//        em = emf.createEntityManager();
+        em.getTransaction().begin();
         for (int i = 0; i < 10; i++) {
             entity = em.find(CachedEntity.class, entities.get(0).getId());
             assertCached(entity);
             em.clear();
         }
+        em.getTransaction().commit();
 
         // Try get entity using second entity manager without SQL to database
         p("========== Get entity using another EntityManager - no SQL query happen, data retrieved from cache ==========");

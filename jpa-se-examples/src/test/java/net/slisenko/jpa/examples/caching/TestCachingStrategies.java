@@ -2,6 +2,7 @@ package net.slisenko.jpa.examples.caching;
 
 import net.slisenko.Identity;
 import net.slisenko.jpa.examples.caching.model.NonStrictReadWriteEntity;
+import net.slisenko.jpa.examples.caching.model.NotCachedEntity;
 import net.slisenko.jpa.examples.caching.model.ReadOnlyEntity;
 import net.slisenko.jpa.examples.caching.model.ReadWriteEntity;
 import org.junit.Assert;
@@ -10,12 +11,22 @@ import org.junit.Test;
 import javax.persistence.EntityManager;
 import javax.persistence.RollbackException;
 
+/**
+ * Если не делается записи, то в принципе все стратегии работают одинаково быстро.
+ * Если запись происходит, то READ_WRITE опирается в проблемах на базу, NON_STRICT_READ_WRITE - на себя
+ * По сути если записи нет, то read_write делает для каждой операции поиска в кеше ещё и сравнение timestamps, а nonstrict - не делает
+ */
 public class TestCachingStrategies extends BaseCacheTest {
 
      /**
       * Hibernate throws exception if we want to change @Cache(READ ONLY) entity
       *
       * Caches data that is never updated.
+      *
+      * Good solution for immutable data (for example: messages in chat, bids in auction).
+      * No consistency problems.
+      *
+      * http://vladmihalcea.com/2015/04/27/how-does-hibernate-read_only-cacheconcurrencystrategy-work/
       */
      @Test(expected = RollbackException.class)
      public void testReadOnly() {
@@ -63,9 +74,22 @@ public class TestCachingStrategies extends BaseCacheTest {
 
       • So, there is no chance of Dirty Read, and any session will almost ALWAYS read READ COMMITTED data from the database/Cache.
       *
+      * Нет inconsistency window:
+      * На сущность в кеше ставится lock.
+      * Происходит комит транзакции в БД.
+      * Другие транзакции вынуждены читать из базы когда установлен лок.
+      * После комита данные обновляются в кеше и лок снимается.
+      * Другие транзакции читают обновлённую сущность из кеша.
       *
+      * На лок ставится таймаут. Если транзакция rollback, то лок ещё какое-то время висит.
+      * Таким образом мы имеем гарантию что всегда получим последнюю версию сущности.
       *
+      * Мы можем брать из кеша только записи, timestamp у которых меньше чем у нашей сессии. Если больше - идём в базу
+      * that i.e. cache entry reflects the database state prior to transaction start.
+      * Таким образом сущности, вытягиваемые из кеша отображают состояние базы до начала сессии.
+      * Если что-то было обновлено - то мы читаем из базы полагаясь на её уровень изоляции. В случае конфликта - даём БД право решать.
       *
+      * https://anirbanchowdhury.wordpress.com/2012/07/23/hibernate-second-level-cache-ehcache/
       * TODO попробовать оптимистическую и писсимистическую блокировку + кеш второго уровня
       * https://anirbanchowdhury.wordpress.com/2012/07/23/hibernate-second-level-cache-ehcache/
       *http://vladmihalcea.com/2015/05/18/how-does-hibernate-nonstrict_read_write-cacheconcurrencystrategy-work/
@@ -77,56 +101,21 @@ public class TestCachingStrategies extends BaseCacheTest {
       */
      @Test
      public void testReadWrite() {
-//          testCache(new ReadWriteEntity());
+          /**
+           * обычный read-write работает как-будто вообще никакого кеша не включено
+           * Только ассерт на нахождение записи в кеше возвращает true
+            */
+//          testCache(new NotCachedEntity());
+          testCache(new ReadWriteEntity());
 
-          p("========== Populate initial entity and cache ==========");
-          // Test concurrency
-          NonStrictReadWriteEntity re = new NonStrictReadWriteEntity();
-          re.setName("concurrent");
-          em.getTransaction().begin();
-          em.persist(re);
-          em.getTransaction().commit();
-          em.clear();
-          // Populate cache
-          re = em.find(NonStrictReadWriteEntity.class, re.getId());
-          em.clear();
-//          assertCached(re);
 
-          p("========== Get entity, no SQL runs ==========");
-          // Get entity using em1
-          em.getTransaction().begin();
-          re = em.find(NonStrictReadWriteEntity.class, re.getId());
+         // Что будет если записывать в двух параллельных транзакциях?
+         // Одна транзакция делает запись, посавила лок
+         // В этот момент вторая транзакция хочет записать, может ли она это сделать если в кеше стоит лок?
+//          testConcurrentCacheUpdates(new ReadWriteEntity());
+//          testConcurrentCacheUpdates(new NonStrictReadWriteEntity());
+//          testConcurrentCacheUpdates(new NotCachedEntity());
 
-               p("========== Change entity using another transaction ==========");
-               EntityManager em2 = emf.createEntityManager();
-               em2.getTransaction().begin();
-               NonStrictReadWriteEntity re2 = em2.find(NonStrictReadWriteEntity.class, re.getId());
-     //          assertCached(re2);
-               re2.setName("changed concurrently");
-               em2.getTransaction().commit();
-               em2.close();
-     //          assertNotCached(re2);
-
-          p("========== Read entity one more time in 1-st transaction, get stale data ==========");
-          em.clear();
-          // Get entity one more time
-          re = em.find(NonStrictReadWriteEntity.class, re.getId());
-//          assertNotCached(re);
-          // In same transaction we do not see changes, repeatable read works
-          // TODO и почему интересно он работает? я его не просил
-          Assert.assertEquals("concurrent", re.getName());
-          em.getTransaction().commit();
-
-          em.clear();
-//          emf.getCache().evictAll();
-
-          // Если у нас включён кеш, мы продолжаем читать устаревшие данные, нужно грамотно настроить экспирейшен
-          // Try get entity in another transaction
-          p("========== Read stale data once again from cache ==========");
-          em.getTransaction().begin();
-          re = em.find(NonStrictReadWriteEntity.class, re.getId());
-          Assert.assertEquals("changed concurrently", re.getName());
-          em.getTransaction().commit();
      }
 
      /**
@@ -136,14 +125,130 @@ public class TestCachingStrategies extends BaseCacheTest {
       * this concurrency strategy makes no guarantee that the item returned from the cache is the latest version available
       * in the database. Configure your cache timeout accordingly.
       *
+      * Перед тем как закомитить транзакцию, объект чистится из кеша.
+      * Транзакция комитится.
+      * Чистка кеша выполняется ещё раз.
+      *
+      * Маленькое inconsistency window:
+      * Кто-то может запросить данные после первой очистки, но до комита и тем самым заполнить кеш старой версией.
+      * Комит проходит, но другие транзакции получают всё ещё старую версию.
+      * Только после второй очистки все будут получать новую версию.
+      *
+      * Нет гарантии что мы получим последнюю версию сущности.
+      *
+      * the entity is sometimes updated (so read-only does not apply), but that it's extremely unlikely that two concurrent transactions update the same item.
+      * For example, if you have thousands of users accessing the data, an one batch regularly update it, this option is the right one to choose: only one transaction updates the items at a time.
+      *
       * TODO test concurrent strategy
+      *
+      * http://vladmihalcea.com/2015/05/18/how-does-hibernate-nonstrict_read_write-cacheconcurrencystrategy-work/
       */
      @Test
-     public void testNonstrictReadWrite() {
+     public void testNonStrictReadWrite() {
+          /**
+           * По моим экспериментам, nonstrict работает как положено - кеш используется, после апдейта запись из кеша выкидывается
+           */
           testCache(new NonStrictReadWriteEntity());
+//          p("========== Populate initial entity and cache ==========");
+//          // Test concurrency
+//          NonStrictReadWriteEntity re = new NonStrictReadWriteEntity();
+//          re.setName("concurrent");
+//          em.getTransaction().begin();
+//          em.persist(re);
+//          em.getTransaction().commit();
+//          em.clear();
+//          // Populate cache
+//          re = em.find(NonStrictReadWriteEntity.class, re.getId());
+//          em.clear();
+//          assertCached(re);
+//
+//          p("========== Get entity, no SQL runs ==========");
+//          // Get entity using em1
+//          em.getTransaction().begin();
+//          re = em.find(NonStrictReadWriteEntity.class, re.getId());
+//
+//          p("========== Change entity using another transaction ==========");
+//          EntityManager em2 = emf.createEntityManager();
+//          em2.getTransaction().begin();
+//          NonStrictReadWriteEntity re2 = em2.find(NonStrictReadWriteEntity.class, re.getId());
+//          assertCached(re2);
+//          re2.setName("changed concurrently");
+//          em2.getTransaction().commit();
+//          em2.close();
+//          assertNotCached(re2); // Non strict read-write выкидывает entity из кеша
+//
+//          p("========== Read entity one more time in 1-st transaction, get stale data ==========");
+//          em.clear();
+//          // Get entity one more time - тут по идее мы должны уже новую сущность загрузить
+//          re = em.find(NonStrictReadWriteEntity.class, re.getId());
+//          assertCached(re);
+//          // In same transaction we do not see changes, repeatable read works
+//          // TODO и почему интересно он работает? я его не просил
+//          Assert.assertEquals("concurrent", re.getName());
+//          em.getTransaction().commit();
+//
+//          em.clear();
+//          emf.getCache().evictAll();
+//
+//          // Try get entity in another transaction
+//          p("========== Read stale data once again from cache ==========");
+//          em.getTransaction().begin();
+//          re = em.find(NonStrictReadWriteEntity.class, re.getId());
+//          Assert.assertEquals("concurrent", re.getName());
+//          em.getTransaction().commit();
+     }
+
+     public void testConcurrentCacheUpdates(Identity re) {
+          p("========== Populate initial entity and cache ==========");
+          re.setName("concurrent");
+          em.getTransaction().begin();
+          em.persist(re);
+          em.getTransaction().commit();
+          em.clear();
+
+          // Populate cache
+          re = em.find(re.getClass(), re.getId());
+          em.clear();
+          assertCached(re);
+
+//          p("========== Get entity, no SQL runs ==========");
+          // Get entity using em1
+//          em.getTransaction().begin();
+//          re = em.find(re.getClass(), re.getId());
+
+          p("========== Get entity for change, no SELECT SQL generated ==========");
+          em.getTransaction().begin();
+          Identity re2 = em.find(re.getClass(), re.getId());
+          assertCached(re2);
+          re2.setName("changed concurrently");
+          em.getTransaction().commit();
+          assertNotCached(re2); // Non strict read-write выкидывает entity из кеша
+//
+//          p("========== Read entity one more time in 1-st transaction ==========");
+//          // Get entity one more time - тут по идее мы должны уже новую сущность загрузить
+//          // Почему тут возвращается старая версия?
+//          re = em.find(re.getClass(), re.getId());
+////          assertCached(re);
+//          // In same transaction we do not see changes, repeatable read works
+//          // TODO и почему интересно он работает? я его не просил
+//          Assert.assertEquals("concurrent", re.getName());
+//          em.getTransaction().commit();
+//
+//          em.clear();
+//          // Почему без евикта мы продолжаем получать старые версии?
+////          emf.getCache().evictAll();
+//
+//          // Try get entity in another transaction
+//          p("========== Read stale data once again from cache ==========");
+//          em.getTransaction().begin();
+//          re = em.find(re.getClass(), re.getId());
+//          // При non strict read/write мы всё ещё видим старую версию. Почему?
+//          Assert.assertEquals("changed concurrently", re.getName());
+//          em.getTransaction().commit();
      }
 
      public void testCache(Identity re) {
+         // TODO test remove entity
           p("========== Persist initial entity ==========");
           em.getTransaction().begin();
           // Save read only entity
@@ -179,5 +284,13 @@ public class TestCachingStrategies extends BaseCacheTest {
                em.clear();
                assertCached(re);
           }
+     }
+
+     /**
+      * Обновления в БД и кеш происходят в рамках одной распределённой XA-транзакции = синхронно.
+      */
+     @Test
+     public void testTransactionalCache() {
+
      }
 }

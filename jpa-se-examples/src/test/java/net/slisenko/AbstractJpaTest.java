@@ -49,7 +49,7 @@ public class AbstractJpaTest {
         // Print hibernate statistics
         System.out.println("========== Hibernate statistics ==========");
         EntityManagerFactoryImpl empImpl = (EntityManagerFactoryImpl) emf;
-        System.out.println(empImpl.getSessionFactory().getStatistics());
+        System.out.println(empImpl.getSessionFactory().getStatistics().toString().replace(",", ",\n"));
         System.out.println("========== ==========");
 
         if (em.isOpen()) {

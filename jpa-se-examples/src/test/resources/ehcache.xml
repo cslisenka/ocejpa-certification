@@ -19,7 +19,7 @@
     <diskStore path="java.io.tmpdir/hibernateCache" />
 
     <!-- If no matching cache for entity/query found, Hibernate uses default cache -->
-    <defaultCache maxElementsInMemory="100" diskPersistent="false"/>
+    <defaultCache maxElementsInMemory="1000" diskPersistent="false"/>
 
     <!--
         Cache regions: we need to define regions for specific entities. If no region defined, default cache used.
