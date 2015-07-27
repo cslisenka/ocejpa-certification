@@ -9,19 +9,20 @@ import org.junit.Before;
 
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class BaseCacheTest extends AbstractJpaTest {
 
     protected static List<CachedEntity> entities = new ArrayList<>();
 
-    @Before
-    public void initData() {
-        EntityManager em = emf.createEntityManager();
-        cleanAll(em);
-        insertCachedEntities(em);
-        em.close();
-    }
+//    @Before
+//    public void initData() {
+//        EntityManager em = emf.createEntityManager();
+//        cleanAll(em);
+//        insertCachedEntities(em);
+//        em.close();
+//    }
 
     @After
     public void evictCache() {
@@ -65,5 +66,47 @@ public class BaseCacheTest extends AbstractJpaTest {
         }
         em.getTransaction().commit();
         em.clear();
+    }
+
+    public <T extends Identity> T persistAndLoadToCache(T entity) {
+        p("========== Persist entity ==========");
+        em.getTransaction().begin();
+        em.persist(entity);
+        em.getTransaction().commit();
+        em.clear();
+        assertNotCached(entity);
+
+        p("========== Request entity and populate cache ==========");
+        Identity founded = em.find(entity.getClass(), entity.getId());
+        assertCached(founded);
+        em.clear();
+        return (T) founded;
+    }
+
+    public void updateEntity(Identity entity) {
+        p("========== Update entity ==========");
+        em.getTransaction().begin();
+        Identity founded = em.find(entity.getClass(), entity.getId());
+        founded.setName(new Date().getTime() + "");
+        em.getTransaction().commit();
+        em.clear();
+    }
+
+    public void queryEntityManyTimes(Identity entity, boolean isCreateEntityManagerForEachRequest) {
+        EntityManager myEm = em;
+        for (int i = 0; i < 10; i++) {
+            p("========== Query entity " + (isCreateEntityManagerForEachRequest ? "with new entity manager" : "") + "==========");
+            if (isCreateEntityManagerForEachRequest) {
+                myEm = emf.createEntityManager();
+            }
+
+            myEm.find(entity.getClass(), entity.getId());
+
+            if (isCreateEntityManagerForEachRequest) {
+                myEm.close();
+            } else {
+                myEm.clear();
+            }
+        }
     }
 }

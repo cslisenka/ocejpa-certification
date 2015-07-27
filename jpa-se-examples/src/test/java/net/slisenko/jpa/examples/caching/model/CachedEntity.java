@@ -17,11 +17,9 @@ public class CachedEntity extends Identity {
     /**
      * @Cache not required here because foreign key is on entity side. If we use join table, we need to set @Cache annotation.
      */
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     protected CachedEntityRelationship relationshipEager;
 
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     protected CachedEntityRelationship relationshipLazy;
 
@@ -31,7 +29,7 @@ public class CachedEntity extends Identity {
     @Transient
     protected List<CachedEntityRelationship> list = new ArrayList<>();
 
-    @Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToMany(mappedBy = "entity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     protected List<CachedEntityRelationship> listBack = new ArrayList<>();
 

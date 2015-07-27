@@ -1,15 +1,12 @@
 package net.slisenko.jpa.examples.caching;
 
-import net.slisenko.Identity;
 import net.slisenko.jpa.examples.caching.model.NonStrictReadWriteEntity;
 import net.slisenko.jpa.examples.caching.model.ReadOnlyEntity;
 import net.slisenko.jpa.examples.caching.model.ReadWriteEntity;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
-import java.util.Date;
 
 /**
  * There are 4 cache strategies:
@@ -20,6 +17,11 @@ import java.util.Date;
  *
  * If we do not make updates, all caching strategies almost similar in performance.
  * If updates happen, NONSTRICT READ_WRITE relies on cache, READ_WRITE - on database.
+ *
+ * If we do not configure cache correctly, we can decrease database isolation level!
+ *
+ * @Cacheable annotation in JPA doesn't allow to specify cache strategy
+ * @Cache in hibernate allows to specify caching strategy
  *
  * http://vladmihalcea.com/2015/04/16/things-to-consider-before-jumping-to-enterprise-caching/
  * http://vladmihalcea.com/2014/03/03/caching-best-practices/
@@ -82,9 +84,6 @@ public class TestCachingStrategies extends BaseCacheTest {
       */
      @Test
      public void testNonStrictReadWrite() {
-          /**
-           * По моим экспериментам, nonstrict работает как положено - кеш используется, после апдейта запись из кеша выкидывается
-           */
           NonStrictReadWriteEntity entity = persistAndLoadToCache(new NonStrictReadWriteEntity());
 
           // If object is in cache, hibernate goes to cache
@@ -136,47 +135,5 @@ public class TestCachingStrategies extends BaseCacheTest {
      @Test
      public void testTransactionalCache() {
           // TODO test in J2EE environment
-     }
-
-     public <T extends Identity> T persistAndLoadToCache(T entity) {
-          p("========== Persist entity ==========");
-          em.getTransaction().begin();
-          em.persist(entity);
-          em.getTransaction().commit();
-          em.clear();
-          assertNotCached(entity);
-
-          p("========== Request entity and populate cache ==========");
-          Identity founded = em.find(entity.getClass(), entity.getId());
-          assertCached(founded);
-          em.clear();
-          return (T) founded;
-     }
-
-     public void updateEntity(Identity entity) {
-          p("========== Update entity ==========");
-          em.getTransaction().begin();
-          Identity founded = em.find(entity.getClass(), entity.getId());
-          founded.setName(new Date().getTime() + "");
-          em.getTransaction().commit();
-          em.clear();
-     }
-
-     public void queryEntityManyTimes(Identity entity, boolean isCreateEntityManagerForEachRequest) {
-          EntityManager myEm = em;
-          for (int i = 0; i < 10; i++) {
-               p("========== Query entity " + (isCreateEntityManagerForEachRequest ? "with new entity manager" : "") + "==========");
-               if (isCreateEntityManagerForEachRequest) {
-                    myEm = emf.createEntityManager();
-               }
-
-               myEm.find(entity.getClass(), entity.getId());
-
-               if (isCreateEntityManagerForEachRequest) {
-                    myEm.close();
-               } else {
-                    myEm.clear();
-               }
-          }
      }
 }

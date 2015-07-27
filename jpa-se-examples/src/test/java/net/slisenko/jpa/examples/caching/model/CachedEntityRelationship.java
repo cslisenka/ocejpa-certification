@@ -7,15 +7,16 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
-@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @Entity
 public class CachedEntityRelationship extends Identity {
 
     @ManyToOne
     private CachedEntity entity;
 
-    public CachedEntityRelationship(String name) {
+    public CachedEntityRelationship(String name, CachedEntity entity) {
         this.name = name;
+        this.entity = entity;
     }
 
     public CachedEntityRelationship() {
