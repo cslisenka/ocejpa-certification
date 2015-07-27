@@ -15,10 +15,9 @@ import javax.persistence.EntityManager;
  *      JDBC caching (transparently for programmer)
  *
  * Types of caches:
- *      Entity cache - caches entity attributes (not entity objects!, this called hydrated), constructs entity objects for each request
+ *      Entity cache - caches hydrated entities (only attributes), constructs entity objects for each request
  *          [id -> entity]
- *          relationships are not stored by default, we need to specify their caching explicitly, if so, cache only
- *          stores relationships ids
+ *          relationships are not stored by default, we need to specify their caching explicitly, if so, cache only stores relationships ids
  *          [id -> entity,relationships{1, 2, 3}]
  *      Query cache - caches query results
  *          [query,parameters -> query results]
@@ -73,6 +72,11 @@ import javax.persistence.EntityManager;
  * @Cacheable аннотация, которая используется в JPA не позволяет задать стратегию кеширования для конкретной сущности
  */
 public class TestEntityCache extends BaseCacheTest {
+
+    /**
+     * Тесты на кеш
+     *
+     */
 
     @Test
     public void testCacheSimpleEntity() {
