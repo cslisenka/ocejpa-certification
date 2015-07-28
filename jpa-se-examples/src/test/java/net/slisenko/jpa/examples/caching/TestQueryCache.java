@@ -1,6 +1,7 @@
 package net.slisenko.jpa.examples.caching;
 
 import net.slisenko.jpa.examples.caching.model.CachedEntity;
+import org.hibernate.annotations.Cache;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -15,9 +16,6 @@ import java.util.List;
  *
  * Query cache stores [parameters,query]->values
  *      Query cache makes sense only when we execute same query many times
- *
- * TODO хотелось бы понять когда инвалидируются данные в кеше запросов
- *
  */
 public class TestQueryCache extends BaseCacheTest {
 
@@ -56,13 +54,15 @@ public class TestQueryCache extends BaseCacheTest {
     @Test
     public void testQueryCache() {
         p("========== Get entity using query - SQL works (only single entities are cached) ==========");
-        em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class).getResultList();
+        List<CachedEntity> results = em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class).getResultList();
         em.clear();
+        assertNotCached(results);
 
         p("========== Get entity using query with cache hint (query results will be cached) ==========");
-        em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+        results = em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
                 .setHint("org.hibernate.cacheable", true).getResultList();
         em.clear();
+        assertCached(results);
         // TODO doesn't work for me
 //        q.setHint("javax.persistence.cache.retrieveMode", CacheRetrieveMode.USE);
 
@@ -105,8 +105,36 @@ public class TestQueryCache extends BaseCacheTest {
         em.clear();
     }
 
+    /**
+     * Query Cache can invalidate its entries whenever the associated table space changes.
+     * Every time we persist/remove/update an Entity, all Query Cache entries using that particular table will get invalidated.
+     */
     @Test
     public void testQueryCacheInvalidation() {
-        // TODO
+        p("========== Get entity using query with cache hint (query results will be cached) ==========");
+        em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                .setHint("org.hibernate.cacheable", true).getResultList();
+        em.clear();
+
+        for (int i = 0; i < 3; i++) {
+            p("========== Get data from query cache ==========");
+            em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                    .setHint("org.hibernate.cacheable", true).getResultList();
+            em.clear();
+        }
+        p("====================");
+
+        // Update one of entity
+        p("========== Update one entity ==========");
+        em.getTransaction().begin();
+        CachedEntity entity = em.find(CachedEntity.class, entities.get(0).getId());
+        entity.setName("changed");
+        em.getTransaction().commit();
+        em.clear();
+
+        p("========== Get entity using query with cache hint after we changed entity, query cache was invalidated! ==========");
+        em.createQuery("SELECT c FROM CachedEntity c WHERE c.name LIKE 'cached entity%'", CachedEntity.class)
+                .setHint("org.hibernate.cacheable", true).getResultList();
+        em.clear();
     }
 }
