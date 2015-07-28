@@ -54,7 +54,6 @@ public class TestCache extends BaseCacheTest {
     @Test
     public void testCacheSimpleEntity() {
         CachedEntity entity = persistAndLoadToCache(new CachedEntity());
-
         // After we populated cache, hibernate always goes to cache.
         // Doesn't matter new session or old.
         queryEntityManyTimes(entity, false);
