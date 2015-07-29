@@ -1,7 +1,6 @@
 package net.slisenko.jpa.examples.caching;
 
 import net.slisenko.jpa.examples.caching.model.CachedEntity;
-import org.hibernate.annotations.Cache;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
