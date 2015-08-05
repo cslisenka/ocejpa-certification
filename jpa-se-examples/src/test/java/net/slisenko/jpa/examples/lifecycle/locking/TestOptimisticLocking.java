@@ -1,8 +1,8 @@
 package net.slisenko.jpa.examples.lifecycle.locking;
 
 import junit.framework.Assert;
+import net.slisenko.Identity;
 import net.slisenko.jpa.examples.lifecycle.locking.exception.TransactionFailException;
-import net.slisenko.jpa.examples.lifecycle.locking.model.EntityWithNameAndId;
 import net.slisenko.jpa.examples.lifecycle.locking.model.NonVersionedEntity;
 import net.slisenko.jpa.examples.lifecycle.locking.model.VersionedEntity;
 import org.junit.Before;
@@ -112,7 +112,7 @@ public class TestOptimisticLocking extends AbstractLockingTest {
     /**
      * Одновременно модифицирвем данные двумя разными транзакциями.
      */
-    private void testConcurrentTransactions(EntityManagerFactory emf, LockModeType lockMode, boolean em1ReadsFirst, boolean em1CommitsFirst, EntityWithNameAndId entity) {
+    private void testConcurrentTransactions(EntityManagerFactory emf, LockModeType lockMode, boolean em1ReadsFirst, boolean em1CommitsFirst, Identity entity) {
         // Init data
         EntityManager emInit = emf.createEntityManager();
         emInit.getTransaction().begin();

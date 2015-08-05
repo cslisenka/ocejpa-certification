@@ -6,7 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
 @Entity
-public class NonVersionedEntity extends Identity implements EntityWithNameAndId {
+public class NonVersionedEntity extends Identity {
 
     @ManyToOne
     private VersionedEntity versionedEntity;

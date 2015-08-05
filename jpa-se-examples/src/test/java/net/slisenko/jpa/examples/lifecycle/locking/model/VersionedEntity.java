@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-public class VersionedEntity extends Identity implements EntityWithNameAndId {
+public class VersionedEntity extends Identity {
 
     //TODO TRY TIMESTAMP VERSION FIELD
     @Version
