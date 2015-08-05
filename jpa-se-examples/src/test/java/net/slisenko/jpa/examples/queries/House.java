@@ -2,11 +2,18 @@ package net.slisenko.jpa.examples.queries;
 
 import net.slisenko.Identity;
 
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
+@NamedEntityGraph(name = "HouseWithStreet", attributeNodes = {
+        @NamedAttributeNode("price"),
+        @NamedAttributeNode("name"),
+        @NamedAttributeNode("floors"),
+        @NamedAttributeNode(value = "street", subgraph = "streetSubgraph")
+}, subgraphs = {
+        @NamedSubgraph(name = "streetSubgraph", attributeNodes = {
+                @NamedAttributeNode("name")
+        })
+})
 @Entity
 public class House extends Identity {
 
