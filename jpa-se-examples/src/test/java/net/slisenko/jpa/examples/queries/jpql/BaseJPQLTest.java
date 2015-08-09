@@ -87,6 +87,11 @@ public class BaseJPQLTest extends AbstractJpaTest {
         c2.setBudget(45000);
         em.persist(c2);
 
+        Customer c3 = new Customer();
+        c3.setName("John 2");
+        c3.setBudget(60000);
+        em.persist(c3);
+
         // Different types of customer
         PersonCustomer pk1 = new PersonCustomer();
         pk1.setName("Anna");

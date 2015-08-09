@@ -16,9 +16,6 @@ public class StatefulBeanServlet extends HttpServlet {
     @EJB
     private SessionbeanWithErrors bean;
 
-//    @EJB
-//    private TestTransactionsAndExceptions bean2;
-
     /**
      * Если подинжектать Stateful-бин напрямую, то он создаётся один на сессию. После выпадения эксепшена, бин уничтожается.
      * И далее обращения к сервлету вызывают ошибки.
@@ -29,17 +26,23 @@ public class StatefulBeanServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (req.getParameter("add") != null) {
             resp.getWriter().print("add number to = " + bean.addNumber());
-//            resp.getWriter().print("add number to = " + bean2.callAdd());
         }
 
         if (req.getParameter("view") != null) {
             resp.getWriter().print("all numbers = " + bean.getNumbers());
-//            resp.getWriter().print("all numbers = " + bean2.callGetNumbers());
         }
 
         if (req.getParameter("throw") != null) {
             bean.throwException();
-//            bean2.callSessionBeanWithError();
+        }
+
+        // Even when we handle exception, session bean is discarded
+        if (req.getParameter("throwAndHandle") != null) {
+            try {
+                bean.throwException();
+            } catch (Exception e) {
+                resp.getWriter().print("handled exception = " + e);
+            }
         }
     }
 }

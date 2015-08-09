@@ -64,6 +64,24 @@ public class TestMapCollection extends AbstractJpaTest {
 
     @Test
     public void testKeyByEntityAttribute() {
+        em.getTransaction().begin();
+        Person kostya = new Person("Kostya");
+        em.persist(kostya);
 
+        CreditCard card1 = new CreditCard();
+        card1.setName("visa");
+        card1.setPerson(kostya);
+        em.persist(card1);
+
+        CreditCard card2 = new CreditCard();
+        card2.setName("master card");
+        card2.setPerson(kostya);
+        em.persist(card2);
+        em.getTransaction().commit();
+        em.clear();
+
+        Person newPerson = em.find(Person.class, kostya.getId());
+        System.out.println("===== Get credit cards by names =====");
+        System.out.println(newPerson.getCreditCards());
     }
 }

@@ -35,7 +35,7 @@ public class AbstractJpaTest {
     @BeforeClass
     public static void prepareEntityManagerFactory() {
         // Create entity manager factory from persistence unit
-        emf = Persistence.createEntityManagerFactory(CACHE);
+        emf = Persistence.createEntityManagerFactory(MYSQL);
     }
 
     @Before

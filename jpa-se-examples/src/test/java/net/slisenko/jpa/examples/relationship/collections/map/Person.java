@@ -14,8 +14,8 @@ public class Person extends Identity {
      */
     @ElementCollection
     @CollectionTable(name = "person_contacts")
-    @MapKeyColumn(name = "contact_type")
-    @Column(name = "contact_value")
+    @MapKeyColumn(name = "contact_type") // Override collection table key column
+    @Column(name = "contact_value") // Override collection table value column
     private Map<String, String> contacts = new HashMap<>();
 
     /**
@@ -30,6 +30,10 @@ public class Person extends Identity {
     @OneToMany
     @MapKeyColumn(name = "relation_type")
     private Map<String, Person> family = new HashMap<>();
+
+    @OneToMany(mappedBy = "person")
+    @MapKey(name = "name")
+    private Map<String, CreditCard> creditCards = new HashMap<>();
 
     // TODO key = Entity
 
@@ -66,6 +70,14 @@ public class Person extends Identity {
 
     public void setFamily(Map<String, Person> family) {
         this.family = family;
+    }
+
+    public Map<String, CreditCard> getCreditCards() {
+        return creditCards;
+    }
+
+    public void setCreditCards(Map<String, CreditCard> creditCards) {
+        this.creditCards = creditCards;
     }
 
     @Override

@@ -75,4 +75,16 @@ public class TestJPQLFunctions extends BaseJPQLTest {
 //                em.createQuery("SELECT c FROM Customer c WHERE TREAT(c AS PersonCustomer).securityNumber = '12345'").getResultList();
 //        System.out.println(customersWithTaxIdOrSecurityNumber);
     }
+
+    @Test
+    public void testDistinctInAggregationFunctions() {
+        p("Query which returns duplicates");
+        System.out.println(em.createQuery("SELECT c.budget FROM Customer c, Customer c2").getResultList());
+
+        p("Count of records which return duplicates");
+        System.out.println(em.createQuery("SELECT COUNT(c) FROM Customer c, Customer c2").getSingleResult());
+
+        p("Count of records which return duplicates with distinct");
+        System.out.println(em.createQuery("SELECT COUNT(distinct c) FROM Customer c, Customer c2").getSingleResult());
+    }
 }
