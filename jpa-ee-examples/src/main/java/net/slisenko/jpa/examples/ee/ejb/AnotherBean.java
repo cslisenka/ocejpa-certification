@@ -1,5 +1,7 @@
 package net.slisenko.jpa.examples.ee.ejb;
 
+import net.slisenko.jpa.examples.ee.exception.MyApplicationException;
+import net.slisenko.jpa.examples.ee.exception.MyApplicationExceptionWithRollback;
 import net.slisenko.jpa.examples.ee.model.EESimpleEntity;
 
 import javax.ejb.Stateless;
@@ -48,5 +50,17 @@ public class AnotherBean {
         EESimpleEntity entity = new EESimpleEntity("entity in supports tx, we can see parent entity " + parentEntity);
         em.persist(entity);
         return entity;
+    }
+
+    public void throwSystemException() {
+        throw new RuntimeException("Some system exception thrown by EJB bean");
+    }
+
+    public void throwApplicationException() {
+        throw new MyApplicationException();
+    }
+
+    public void throwApplicationExceptionWithRollback() {
+        throw new MyApplicationExceptionWithRollback();
     }
 }

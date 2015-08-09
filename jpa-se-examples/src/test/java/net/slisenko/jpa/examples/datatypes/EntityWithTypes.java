@@ -8,6 +8,9 @@ import java.util.Calendar;
 import java.util.Date;
 
 @Entity
+@AttributeOverrides({
+    @AttributeOverride(name = "embedded.country", column = @Column(name = "strana")),
+})
 @Table(name = "entity_with_types")
 public class EntityWithTypes extends Identity {
 
@@ -36,7 +39,6 @@ public class EntityWithTypes extends Identity {
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "country", column = @Column(name = "strana")),
         @AttributeOverride(name = "city", column = @Column(name = "gorod"))
     })
     // Works only when we define @JoinColumn in MyEmbeddedObject type

@@ -1,11 +1,13 @@
 package net.slisenko.jpa.examples.lifecycle.locking;
 
+import net.slisenko.jpa.examples.lifecycle.locking.model.LockingEntityWithElementCollection;
 import org.junit.After;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AbstractLockingTest {
@@ -30,6 +32,10 @@ public class AbstractLockingTest {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
+            List<LockingEntityWithElementCollection> entities = em.createQuery("SELECT e FROM LockingEntityWithElementCollection e").getResultList();
+            for (LockingEntityWithElementCollection e : entities) {
+                em.remove(e);
+            }
             em.createQuery("DELETE FROM NonVersionedEntity").executeUpdate();
             em.createQuery("DELETE FROM VersionedEntity").executeUpdate();
             em.getTransaction().commit();

@@ -2,6 +2,7 @@ package net.slisenko.jpa.examples.lifecycle.locking;
 
 import junit.framework.Assert;
 import net.slisenko.jpa.examples.lifecycle.locking.exception.TransactionFailException;
+import net.slisenko.jpa.examples.lifecycle.locking.model.LockingEntityWithElementCollection;
 import net.slisenko.jpa.examples.lifecycle.locking.model.NonVersionedEntity;
 import org.junit.Before;
 import org.junit.Test;
@@ -190,6 +191,27 @@ public class TestPessimisticLocking extends AbstractLockingTest {
      */
     @Test
     public void testPessimisticLockWithRelationships() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        NonVersionedEntity entity = new NonVersionedEntity();
+        em.persist(entity);
+
+        LockingEntityWithElementCollection entity2 = new LockingEntityWithElementCollection();
+        entity2.getNames().add("name1");
+        entity2.getNames().add("name2");
+        entity2.setRelationship(entity);
+        em.persist(entity2);
+        em.getTransaction().commit();
+        em.clear();
+
+        em.getTransaction().begin();
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("javax.persistence.lock.scope", PessimisticLockScope.EXTENDED);
+        LockingEntityWithElementCollection foundedEntity = em.find(LockingEntityWithElementCollection.class, entity2.getId(), LockModeType.PESSIMISTIC_WRITE, properties);
+//        System.out.println(foundedEntity);
+        em.getTransaction().commit();
+
+        // TODO пока не получилось ничего, поведение не зависит от того, добавляем ли мы EXTENDED или нет.
         // TODO проверить, распространяется ли блокировка на связанные сущности при eager loading (или при Lazy loading, когда потом мы дёргаем геттеры)
         // TODO проверить работу lock.scope
     }

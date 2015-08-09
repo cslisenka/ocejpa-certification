@@ -5,6 +5,7 @@ import net.slisenko.Identity;
 import javax.persistence.*;
 
 @Entity
+@EntityListeners({SeparateListener.class})
 public class EntityEventListener extends Identity {
 
     /**

@@ -71,4 +71,18 @@ public class TestJPQLJoins extends BaseJPQLTest {
         // No another query required because we used fetch join
         System.out.println(streets.get(0).getCity());
     }
+
+    /**
+     * Instead of using JOIN we can use IN
+     */
+    @Test
+    public void testINforCollections() {
+        List<Street> streets = em.createQuery("SELECT s FROM Street s, IN(s.houses) h WHERE h.name=:name", Street.class)
+                .setParameter("name", "h1").getResultList();
+        System.out.println(streets);
+
+        streets = em.createQuery("SELECT s FROM Street s JOIN s.houses h WHERE h.name=:name", Street.class)
+                .setParameter("name", "h1").getResultList();
+        System.out.println(streets);
+    }
 }

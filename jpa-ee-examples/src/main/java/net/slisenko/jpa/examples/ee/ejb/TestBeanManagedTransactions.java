@@ -3,6 +3,7 @@ package net.slisenko.jpa.examples.ee.ejb;
 import net.slisenko.jpa.examples.ee.model.EESimpleEntity;
 
 import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
@@ -25,6 +26,9 @@ public class TestBeanManagedTransactions {
     @PersistenceContext
     private EntityManager em;
 
+    @EJB
+    private AnotherBean anotherBean;
+
     @GET
     @Path("/do")
     @Produces(MediaType.APPLICATION_JSON)
@@ -34,5 +38,22 @@ public class TestBeanManagedTransactions {
         em.persist(result);
         tx.commit();
         return result;
+    }
+
+    @GET
+    @Path("/propagation")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String testPropagation() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        tx.begin();
+        EESimpleEntity result = new EESimpleEntity("entity stored in user transaction");
+        em.persist(result);
+        anotherBean.mandatoryTx(result.getId());
+        System.out.println("Status = " + tx.getStatus());
+        if (tx.getStatus() == Status.STATUS_ACTIVE) {
+            System.out.println("Status = active");
+        }
+
+        tx.commit();
+        return "ok";
     }
 }

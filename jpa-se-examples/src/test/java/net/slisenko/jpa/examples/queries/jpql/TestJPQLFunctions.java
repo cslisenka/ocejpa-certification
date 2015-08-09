@@ -1,5 +1,6 @@
 package net.slisenko.jpa.examples.queries.jpql;
 
+import net.slisenko.jpa.examples.queries.City;
 import net.slisenko.jpa.examples.queries.Customer;
 import net.slisenko.jpa.examples.queries.House;
 import net.slisenko.jpa.examples.queries.Street;
