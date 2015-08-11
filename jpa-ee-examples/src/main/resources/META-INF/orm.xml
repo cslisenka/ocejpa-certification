@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file used for mapping settings. -->
+<entity-mappings xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://www.oracle.com/webfolder/technetwork/jsc/xml/ns/persistence/orm_2_1.xsd"
+        version="2.1">
+    <persistence-unit-metadata>
+        <!-- If we do not want to parse annotations at all -->
+        <!--xml-mapping-metadata-complete/-->
+
+        <!-- Things which can be configured for all persistence unit -->
+        <persistence-unit-defaults>
+            <!-- Database specific parameters -->
+            <!--schema></schema-->
+            <!--catalog></catalog-->
+
+            <!-- Enables cascade persist for all relationships. Only persist is available in default settings! -->
+            <cascade-persist/>
+            <!--delimited-identifiers/-->
+
+            <!-- Listeners will be applyed to all entities. They will be invoked in the order which they specified in document. -->
+            <entity-listeners>
+                <entity-listener class="net.slisenko.jpa.examples.ee.model.DefaultEntityListener1"/>
+                <entity-listener class="net.slisenko.jpa.examples.ee.model.DefaultEntityListener2"/>
+            </entity-listeners>
+        </persistence-unit-defaults>
+    </persistence-unit-metadata>
+
+    <!-- Mapping file defaults - do not affect annotated entities, affect entities only in mapping file -->
+    <package>net.slisenko.jpa.examples.ee.model</package>
+    <table-generator name="testGenerator"/>
+    <named-query name="findAllEESimpleEntities">
+        <query>SELECT e FROM EESimpleEntity e</query>
+    </named-query>
+
+    <!-- metadata complete = not parse annotations for this class -->
+    <entity class="net.slisenko.jpa.examples.ee.model.EESimpleEntity" metadata-complete="false">
+        <table name="eetable"/>
+        <attributes>
+            <id name="id">
+                <generated-value strategy="IDENTITY"/>
+            </id>
+            <basic name="name">
+                <column name="ee_name"></column>
+            </basic>
+        </attributes>
+    </entity>
+</entity-mappings>

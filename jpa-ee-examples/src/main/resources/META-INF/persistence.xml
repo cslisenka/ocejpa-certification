@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- This file used for general persistence unit settings. -->
 <persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
-    <persistence-unit name="primary">
+    <!--
+        name is unique for module: ejb-jar, war
+        transaction type is always JTA when we use application server. If we define RESOURSE_LOCAL - we must use EntityTransaction manually (in Java SE)
+     -->
+    <persistence-unit name="primary" transaction-type="JTA">
+        <!-- Provider connects to datasource. Can be also non-jta data source. -->
         <jta-data-source>java:jboss/datasources/mysql</jta-data-source>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>
@@ -10,5 +16,15 @@
             <property name="hibernate.use_sql_comments" value="true" />
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
         </properties>
+
+        <!-- orm.xml imported automatically -->
+        <mapping-file>META-INF/mappingFile1.xml</mapping-file>
+        <mapping-file>META-INF/mappingFile2.xml</mapping-file>
+        <!--
+            Explicitly listed classes:
+            1. Classes are not local to deployment unit JAR
+            2. We define all classes that we need and also specify <exclude-unlisted-classes>
+         -->
+        <!--class></class-->
     </persistence-unit>
 </persistence>

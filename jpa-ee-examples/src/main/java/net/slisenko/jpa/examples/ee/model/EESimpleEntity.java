@@ -1,14 +1,13 @@
 package net.slisenko.jpa.examples.ee.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-
-@Entity
+/**
+ * All mappings related information provided in xml files.
+ */
+//@Entity
 public class EESimpleEntity {
 
-    @Id
-    @GeneratedValue
+//    @Id
+//    @GeneratedValue
     private int id;
 
     private String name;
