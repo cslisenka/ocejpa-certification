@@ -1,6 +1,5 @@
 package net.slisenko.jpa.examples.queries.jpql;
 
-import net.slisenko.jpa.examples.queries.City;
 import net.slisenko.jpa.examples.queries.Customer;
 import net.slisenko.jpa.examples.queries.House;
 import net.slisenko.jpa.examples.queries.Street;
@@ -18,8 +17,15 @@ public class TestJPQLFunctions extends BaseJPQLTest {
 
     @Test
     public void testLike() {
+        //  means from 0 to any number of any characters
+        p("Using %");
         List<House> houses = em.createQuery("SELECT h FROM House h WHERE h.name LIKE 'house%'").getResultList();
-        System.out.println(houses);
+        p(houses);
+
+        // _ means any one character
+        p("Using _");
+        houses = em.createQuery("SELECT h FROM House h WHERE h.name LIKE 'hous__'").getResultList();
+        p(houses);
     }
 
     @Test

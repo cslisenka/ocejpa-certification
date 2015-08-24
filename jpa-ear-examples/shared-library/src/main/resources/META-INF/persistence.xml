@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+    <!--
+        name is unique for module: ejb-jar, war
+        transaction type is always JTA when we use application server. If we define RESOURSE_LOCAL - we must use EntityTransaction manually (in Java SE)
+     -->
+    <persistence-unit name="pu" transaction-type="JTA">
+        <!-- Provider connects to datasource. Can be also non-jta data source. -->
+        <jta-data-source>java:jboss/datasources/mysql</jta-data-source>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+        <properties>
+            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.hbm2ddl.auto" value="create-drop" />
+            <property name="hibernate.use_sql_comments" value="true" />
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+        </properties>
+
+        <mapping-file>META-INF/mappingFileInJar.xml</mapping-file>
+    </persistence-unit>
+</persistence>

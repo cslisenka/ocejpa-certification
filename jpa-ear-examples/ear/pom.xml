@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>jpa-ear-parent</artifactId>
+        <groupId>net.slisenko</groupId>
+        <version>9.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>jpa-ear</artifactId>
+    <packaging>ear</packaging>
+
+    <dependencies>
+        <!-- Dependencies on the ejb and web modules so that they can be found by the ear plugin -->
+        <dependency>
+            <groupId>net.slisenko</groupId>
+            <artifactId>web</artifactId>
+            <type>war</type>
+        </dependency>
+        <dependency>
+            <groupId>net.slisenko</groupId>
+            <artifactId>web2</artifactId>
+            <type>war</type>
+        </dependency>
+        <dependency>
+            <groupId>net.slisenko</groupId>
+            <artifactId>shared-library</artifactId>
+            <version>${project.version}</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+      <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>${version.ear.plugin}</version>
+                <configuration>
+                    <!-- Tell Maven we are using Java EE 7 -->
+                    <version>6</version>
+                    <!-- Use Java EE ear libraries as needed. Java EE ear libraries 
+                        are in easy way to package any libraries needed in the ear, and automatically 
+                        have any modules (EJB-JARs and WARs) use them -->
+                    <defaultLibBundleDir>lib</defaultLibBundleDir>
+                    <modules>
+                    <!-- Default context root of the web app is /wildfly-ejb-in-ear-web.
+                        If a custom context root is needed, uncomment the following snippet to
+                        register our War as a web module and set the contextRoot property -->
+                        <webModule>
+                            <groupId>net.slisenko</groupId>
+                            <artifactId>web</artifactId>
+                            <contextRoot>/jpa-ear-web</contextRoot>
+                        </webModule>
+                        <webModule>
+                            <groupId>net.slisenko</groupId>
+                            <artifactId>web2</artifactId>
+                            <contextRoot>/jpa-ear-web2</contextRoot>
+                        </webModule>
+                    </modules>
+                    <fileNameMapping>no-version</fileNameMapping>
+                </configuration>
+            </plugin>
+            <!-- WildFly plugin to deploy ear -->
+            <plugin>
+                <groupId>org.wildfly.plugins</groupId>
+                <artifactId>wildfly-maven-plugin</artifactId>
+                <version>${version.wildfly.maven.plugin}</version>
+                <configuration>
+                    <filename>${project.artifactId}.ear</filename>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
