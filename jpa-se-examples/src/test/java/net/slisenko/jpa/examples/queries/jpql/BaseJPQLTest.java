@@ -14,6 +14,8 @@ public class BaseJPQLTest extends AbstractJpaTest {
     @Before
     public void initData() {
         em.getTransaction().begin();
+        em.createQuery("DELETE FROM JPQLPresentation s").executeUpdate();
+        em.createQuery("DELETE FROM JPQLStudent s").executeUpdate();
         em.createQuery("DELETE FROM Customer c").executeUpdate();
         em.createQuery("DELETE FROM House c").executeUpdate();
         em.createQuery("DELETE FROM Street c").executeUpdate();

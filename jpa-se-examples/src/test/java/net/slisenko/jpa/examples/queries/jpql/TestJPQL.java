@@ -4,6 +4,10 @@ import net.slisenko.jpa.examples.queries.*;
 import org.junit.Test;
 
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 public class TestJPQL extends BaseJPQLTest {
@@ -210,5 +214,54 @@ public class TestJPQL extends BaseJPQLTest {
 
         List<Street> streets = em.createNamedQuery("allStreets").getResultList();
         System.out.println(streets);
+    }
+
+    @Test
+    public void testExam4Question33() {
+        em.getTransaction().begin();
+        JPQLStudent s1 = new JPQLStudent();
+        em.persist(s1);
+        JPQLStudent s2 = new JPQLStudent();
+        em.persist(s2);
+        JPQLStudent s3 = new JPQLStudent();
+        em.persist(s3);
+
+        JPQLPresentation p1 = new JPQLPresentation("pr1", 100);
+        p1.setStudent(s1);
+        JPQLPresentation p2 = new JPQLPresentation("pr2", 300);
+        p2.setStudent(s1);
+
+        JPQLPresentation p3 = new JPQLPresentation("pr3", 260);
+        p3.setStudent(s2);
+
+        JPQLPresentation p4 = new JPQLPresentation("pr4", 100);
+        p4.setStudent(s3);
+        JPQLPresentation p5 = new JPQLPresentation("pr5", 120);
+        p5.setStudent(s3);
+
+
+        em.persist(p1);
+        em.persist(p2);
+        em.persist(p3);
+        em.persist(p4);
+        em.persist(p5);
+
+        em.getTransaction().commit();
+        em.clear();
+
+        // Get all presentations of all students which have presentation with at least 250 scores
+        p("Using JPQL");
+        p(em.createQuery("SELECT prs FROM JPQLStudent s JOIN s.presentations p JOIN s.presentations prs WHERE p.marksObtained >= 250").getResultList());
+
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<JPQLPresentation> presQ = cb.createQuery(JPQLPresentation.class);
+        Root<JPQLStudent> sRoot = presQ.from(JPQLStudent.class);
+        Join<JPQLStudent, JPQLPresentation> studentPresRoot = sRoot.join("presentations");
+        Join<JPQLStudent, JPQLPresentation> allPresRoot = sRoot.join("presentations");
+        presQ.where(cb.ge(studentPresRoot.<Integer>get("marksObtained"), 250));
+        presQ.select(allPresRoot).distinct(true);
+
+        p("Using criteria API");
+        System.out.println(em.createQuery(presQ).getResultList());
     }
 }
